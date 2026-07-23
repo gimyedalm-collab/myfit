@@ -2490,6 +2490,7 @@
           ' <small>' +
           c.date +
           ' · 세트 완료 시 ✓ 누르면 휴식 타이머</small></div><div class="wrap">' +
+          '<button class="btn gray small" style="margin:2px 0 8px" onclick="startTimer(GOALS[st.profile.goal].rest)">휴식 타이머 시작 (' + GOALS[st.profile.goal].rest + '초)</button>' +
           c.ex
             .map(function (e, ei) {
               var last = lastFor(e.n);
@@ -3035,6 +3036,7 @@
             : '<p class="muted">이번 주 첫 운동을 시작하면 여기에 채워져요.</p>') +
           '</div>' +
           '<div class="card"><h3>몸 상태 기록</h3><div class="row"><input id="bw" inputmode="decimal" placeholder="몸무게 kg"><input id="bf" inputmode="decimal" placeholder="체지방 %"></div><div class="row" style="margin-top:8px"><input id="bwa" inputmode="decimal" placeholder="허리 cm"><input id="bar" inputmode="decimal" placeholder="팔 cm"><button class="btn small" style="flex:none" onclick="addBody()">기록</button></div>' +
+          '<label class="btn gray small" style="display:inline-block;margin-top:8px">인바디 사진 자동 기록<input type="file" accept="image/*" style="display:none" onchange="inbodyPhoto(this)"></label>' +
           (last
             ? '<p class="muted" style="margin-top:8px">최근(' +
               last.date +
@@ -3044,6 +3046,7 @@
               (last.f ? ' · 체지방 ' + last.f + '%' : '') +
               (last.waist ? ' · 허리 ' + last.waist + 'cm' : '') +
               (last.arm ? ' · 팔 ' + last.arm + 'cm' : '') +
+              (last.muscle ? ' · 골격근 ' + last.muscle + 'kg' : '') +
               '</p>'
             : '') +
           '<br>' +
@@ -3059,6 +3062,7 @@
                 b.w +
                 'kg' +
                 (b.f ? ' · 체지방 ' + b.f + '%' : '') +
+                (b.muscle ? ' · 골격근 ' + b.muscle + 'kg' : '') +
                 '</span></div>'
               );
             })
@@ -3087,6 +3091,46 @@
         st.profile.w = w;
         save();
         render();
+      }
+      async function inbodyPhoto(inp) {
+        if (!coachKey()) { alert('설정에서 AI 코치 API 키를 먼저 넣어주세요'); go('set'); return; }
+        var f = inp.files[0]; if (!f) return;
+        inp.value = '';
+        var rd = new FileReader();
+        rd.onload = async function () {
+          var b64 = rd.result.split(',')[1];
+          var prompt = '이 인바디(체성분) 결과지 사진에서 체중(kg), 체지방률(%), 골격근량(kg), 있으면 허리둘레(cm)를 읽어서 기록해줘. 결과지가 아니면 아니라고만 답해.';
+          try {
+            var summary = '';
+            if (st.provider === 'gemini') {
+              var body = { system_instruction: { parts: [{ text: coachSystem() }] }, contents: [{ role: 'user', parts: [{ inline_data: { mime_type: f.type, data: b64 } }, { text: prompt }] }] };
+              var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + (st.gmodel || 'gemini-2.5-flash') + ':generateContent?key=' + encodeURIComponent(st.gkey), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+              if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 150));
+              var j = await r.json();
+              var txt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(function (pp) { return pp.text || ''; }).join('');
+              var pa = parseGeminiActions(txt);
+              summary = pa.notes.join(' / ') || pa.text.slice(0, 120);
+            } else {
+              var msgs = [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: f.type, data: b64 } }, { type: 'text', text: prompt }] }];
+              while (true) {
+                var rr = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': st.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: st.model || 'claude-opus-4-8', max_tokens: 512, system: coachSystem(), tools: COACH_TOOLS, messages: msgs }) });
+                if (!rr.ok) throw new Error(rr.status + ' ' + (await rr.text()).slice(0, 150));
+                var resp = await rr.json();
+                msgs.push({ role: 'assistant', content: resp.content });
+                if (resp.stop_reason === 'tool_use') {
+                  var results = resp.content.filter(function (b) { return b.type === 'tool_use'; }).map(function (b) { var out = execTool(b.name, b.input); if (b.name === 'log_inbody') summary = out; return { type: 'tool_result', tool_use_id: b.id, content: out }; });
+                  msgs.push({ role: 'user', content: results });
+                  continue;
+                }
+                if (!summary) summary = resp.content.filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join(' ').slice(0, 120);
+                break;
+              }
+            }
+            render();
+            alert(summary || '수치를 못 읽었어요. 더 선명한 결과지 사진으로 다시 시도해보세요.');
+          } catch (e) { alert('인식 오류: ' + e.message); }
+        };
+        rd.readAsDataURL(f);
       }
 
       // ===== 설정 =====
@@ -3397,54 +3441,162 @@
         }
         return '알 수 없는 도구';
       }
-      const GEMINI_MARK = '\n\n[중요 규칙] 음식을 기록해야 하면 답변 맨 끝에 다음 형식의 줄을 정확히 붙인다(사용자에게는 숨겨지니 설명하지 말 것): @@LOG_FOOD {"items":[{"name":"닭가슴살 100g","kcal":110,"protein":23,"carb":0,"fat":2}]}  인바디 결과지면: @@LOG_INBODY {"weight":74,"bodyFat":17,"muscle":34}  이 줄 외에는 log_food 같은 도구 이름을 언급하지 않는다.';
-      function coachKey() { return st.provider === 'gemini' ? st.gkey : st.apiKey; }
+      const GEMINI_MARK =
+        '\n\n[중요 규칙] 음식을 기록해야 하면 답변 맨 끝에 다음 형식의 줄을 정확히 붙인다(사용자에게는 숨겨지니 설명하지 말 것): @@LOG_FOOD {"items":[{"name":"닭가슴살 100g","kcal":110,"protein":23,"carb":0,"fat":2}]}  인바디 결과지면: @@LOG_INBODY {"weight":74,"bodyFat":17,"muscle":34}  이 줄 외에는 log_food 같은 도구 이름을 언급하지 않는다.';
+      function coachKey() {
+        return st.provider === 'gemini' ? st.gkey : st.apiKey;
+      }
       function coachSettingsCard() {
         var prov = st.provider || 'claude';
-        var provSel = [['claude', 'Claude (유료·최고품질)'], ['gemini', 'Gemini (무료)']].map(function (o) { return '<option value="' + o[0] + '"' + (prov === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
-        var models = prov === 'gemini' ? [['gemini-2.5-flash', '빠름·무료 (2.5 Flash)'], ['gemini-3.6-flash', '최신 (3.6 Flash)']] : [['claude-opus-4-8', '최고 성능 (Opus 4.8)'], ['claude-sonnet-5', '균형 (Sonnet 5)'], ['claude-haiku-4-5', '저렴·빠름 (Haiku 4.5)']];
-        var curModel = prov === 'gemini' ? (st.gmodel || 'gemini-2.5-flash') : (st.model || 'claude-opus-4-8');
-        var modSel = models.map(function (o) { return '<option value="' + o[0] + '"' + (curModel === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
-        var keyVal = prov === 'gemini' ? (st.gkey || '') : (st.apiKey || '');
+        var provSel = [
+          ['claude', 'Claude (유료·최고품질)'],
+          ['gemini', 'Gemini (무료)'],
+        ]
+          .map(function (o) {
+            return (
+              '<option value="' +
+              o[0] +
+              '"' +
+              (prov === o[0] ? ' selected' : '') +
+              '>' +
+              o[1] +
+              '</option>'
+            );
+          })
+          .join('');
+        var models =
+          prov === 'gemini'
+            ? [
+                ['gemini-2.5-flash', '빠름·무료 (2.5 Flash)'],
+                ['gemini-3.6-flash', '최신 (3.6 Flash)'],
+              ]
+            : [
+                ['claude-opus-4-8', '최고 성능 (Opus 4.8)'],
+                ['claude-sonnet-5', '균형 (Sonnet 5)'],
+                ['claude-haiku-4-5', '저렴·빠름 (Haiku 4.5)'],
+              ];
+        var curModel =
+          prov === 'gemini'
+            ? st.gmodel || 'gemini-2.5-flash'
+            : st.model || 'claude-opus-4-8';
+        var modSel = models
+          .map(function (o) {
+            return (
+              '<option value="' +
+              o[0] +
+              '"' +
+              (curModel === o[0] ? ' selected' : '') +
+              '>' +
+              o[1] +
+              '</option>'
+            );
+          })
+          .join('');
+        var keyVal = prov === 'gemini' ? st.gkey || '' : st.apiKey || '';
         var keyField = prov === 'gemini' ? 'st.gkey' : 'st.apiKey';
         var modField = prov === 'gemini' ? 'st.gmodel' : 'st.model';
-        var help = prov === 'gemini'
-          ? '무료 키 발급: aistudio.google.com → Get API key (구글 계정만 있으면 됨, 카드 불필요). 무료 등급은 호출 한도가 있고, 구글이 데이터를 학습에 쓸 수 있어요.'
-          : '키 발급: console.anthropic.com → API Keys (최소 $20 크레딧 필요). 입력 데이터는 학습에 안 쓰임.';
-        return '<div class="card"><h3>AI 코치</h3>' +
+        var help =
+          prov === 'gemini'
+            ? '무료 키 발급: aistudio.google.com → Get API key (구글 계정만 있으면 됨, 카드 불필요). 무료 등급은 호출 한도가 있고, 구글이 데이터를 학습에 쓸 수 있어요.'
+            : '키 발급: console.anthropic.com → API Keys (최소 $20 크레딧 필요). 입력 데이터는 학습에 안 쓰임.';
+        return (
+          '<div class="card"><h3>AI 코치</h3>' +
           '<p class="muted">밥 사진·설명으로 칼로리 자동기록, 내 기록 기반 무게·강도 추천. 키는 이 기기에만 저장돼요.</p>' +
-          '<label class="f">제공자</label><select onchange="st.provider=this.value;save();render()">' + provSel + '</select>' +
-          '<label class="f">API 키</label><input type="password" value="' + esc(keyVal) + '" placeholder="' + (prov === 'gemini' ? 'AIza...' : 'sk-ant-...') + '" onchange="' + keyField + '=this.value.trim();save()">' +
-          '<label class="f">모델</label><select onchange="' + modField + '=this.value;save()">' + modSel + '</select>' +
-          '<p class="muted" style="margin-top:8px">' + help + '</p></div>';
+          '<label class="f">제공자</label><select onchange="st.provider=this.value;save();render()">' +
+          provSel +
+          '</select>' +
+          '<label class="f">API 키</label><input type="password" value="' +
+          esc(keyVal) +
+          '" placeholder="' +
+          (prov === 'gemini' ? 'AIza...' : 'sk-ant-...') +
+          '" onchange="' +
+          keyField +
+          '=this.value.trim();save()">' +
+          '<label class="f">모델</label><select onchange="' +
+          modField +
+          '=this.value;save()">' +
+          modSel +
+          '</select>' +
+          '<p class="muted" style="margin-top:8px">' +
+          help +
+          '</p></div>'
+        );
       }
       async function callGemini() {
-        var contents = coachMsgs.filter(function (mm) { return mm.role === 'user' || mm.role === 'assistant'; }).map(function (mm) {
-          var arr = Array.isArray(mm.content) ? mm.content : [{ type: 'text', text: String(mm.content) }];
-          var parts = arr.map(function (b) {
-            if (b.type === 'text') return { text: b.text };
-            if (b.type === 'image') return { inline_data: { mime_type: b.source.media_type, data: b.source.data } };
-            return null;
-          }).filter(Boolean);
-          return { role: mm.role === 'assistant' ? 'model' : 'user', parts: parts };
-        }).filter(function (c) { return c.parts.length; });
+        var contents = coachMsgs
+          .filter(function (mm) {
+            return mm.role === 'user' || mm.role === 'assistant';
+          })
+          .map(function (mm) {
+            var arr = Array.isArray(mm.content)
+              ? mm.content
+              : [{ type: 'text', text: String(mm.content) }];
+            var parts = arr
+              .map(function (b) {
+                if (b.type === 'text') return { text: b.text };
+                if (b.type === 'image')
+                  return {
+                    inline_data: {
+                      mime_type: b.source.media_type,
+                      data: b.source.data,
+                    },
+                  };
+                return null;
+              })
+              .filter(Boolean);
+            return {
+              role: mm.role === 'assistant' ? 'model' : 'user',
+              parts: parts,
+            };
+          })
+          .filter(function (c) {
+            return c.parts.length;
+          });
         var model = st.gmodel || 'gemini-2.5-flash';
-        var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(st.gkey), {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ system_instruction: { parts: [{ text: coachSystem() }] }, contents: contents }),
-        });
-        if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 200));
+        var r = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/models/' +
+            model +
+            ':generateContent?key=' +
+            encodeURIComponent(st.gkey),
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: coachSystem() }] },
+              contents: contents,
+            }),
+          },
+        );
+        if (!r.ok)
+          throw new Error(r.status + ' ' + (await r.text()).slice(0, 200));
         var j = await r.json();
         var parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-        return parts.map(function (pp) { return pp.text || ''; }).join('');
+        return parts
+          .map(function (pp) {
+            return pp.text || '';
+          })
+          .join('');
       }
       function parseGeminiActions(text) {
         var notes = [];
-        var re = /@@(LOG_FOOD|LOG_INBODY)\s*(\{[\s\S]*?\})/g, mch;
+        var re = /@@(LOG_FOOD|LOG_INBODY)\s*(\{[\s\S]*?\})/g,
+          mch;
         while ((mch = re.exec(text))) {
-          try { notes.push(execTool(mch[1] === 'LOG_FOOD' ? 'log_food' : 'log_inbody', JSON.parse(mch[2]))); } catch (e) {}
+          try {
+            notes.push(
+              execTool(
+                mch[1] === 'LOG_FOOD' ? 'log_food' : 'log_inbody',
+                JSON.parse(mch[2]),
+              ),
+            );
+          } catch (e) {}
         }
-        return { text: text.replace(/@@(LOG_FOOD|LOG_INBODY)\s*\{[\s\S]*?\}/g, '').trim(), notes: notes };
+        return {
+          text: text
+            .replace(/@@(LOG_FOOD|LOG_INBODY)\s*\{[\s\S]*?\}/g, '')
+            .trim(),
+          notes: notes,
+        };
       }
       async function callClaude() {
         var r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -3481,14 +3633,29 @@
           if (st.provider === 'gemini') {
             var raw = await callGemini();
             var pa = parseGeminiActions(raw);
-            var disp = pa.text + (pa.notes.length ? '\n\n(' + pa.notes.join(' / ') + ')' : '');
-            coachMsgs.push({ role: 'assistant', content: [{ type: 'text', text: disp || '(응답 없음)' }] });
+            var disp =
+              pa.text +
+              (pa.notes.length ? '\n\n(' + pa.notes.join(' / ') + ')' : '');
+            coachMsgs.push({
+              role: 'assistant',
+              content: [{ type: 'text', text: disp || '(응답 없음)' }],
+            });
           } else {
             while (true) {
               var resp = await callClaude();
               coachMsgs.push({ role: 'assistant', content: resp.content });
               if (resp.stop_reason === 'tool_use') {
-                var results = resp.content.filter(function (b) { return b.type === 'tool_use'; }).map(function (b) { return { type: 'tool_result', tool_use_id: b.id, content: execTool(b.name, b.input) }; });
+                var results = resp.content
+                  .filter(function (b) {
+                    return b.type === 'tool_use';
+                  })
+                  .map(function (b) {
+                    return {
+                      type: 'tool_result',
+                      tool_use_id: b.id,
+                      content: execTool(b.name, b.input),
+                    };
+                  });
                 coachMsgs.push({ role: 'user', content: results });
                 render();
                 continue;
@@ -3497,7 +3664,10 @@
             }
           }
         } catch (e) {
-          coachMsgs.push({ role: 'assistant', content: [{ type: 'text', text: '오류: ' + e.message }] });
+          coachMsgs.push({
+            role: 'assistant',
+            content: [{ type: 'text', text: '오류: ' + e.message }],
+          });
         }
         coachBusy = false;
         render();
