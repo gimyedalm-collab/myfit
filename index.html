@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
     />
     <meta name="theme-color" content="#171717" />
     <link rel="manifest" href="manifest.json" />
@@ -25,6 +25,10 @@
         background: #f2f4f6;
         color: #191f28;
         padding-bottom: 130px;
+        touch-action: manipulation;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        overscroll-behavior-y: contain;
       }
       .top {
         padding: 18px 20px 6px;
@@ -106,7 +110,7 @@
         border: 1.5px solid #e5e8eb;
         border-radius: 10px;
         padding: 10px;
-        font-size: 15px;
+        font-size: 16px;
         width: 100%;
         background: #fff;
         font-family: inherit;
