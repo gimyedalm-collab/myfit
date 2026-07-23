@@ -954,7 +954,7 @@
       if (st.model == null) st.model = 'claude-opus-4-8';
       if (st.provider == null) st.provider = 'claude';
       if (st.gkey == null) st.gkey = '';
-      if (st.gmodel == null) st.gmodel = 'gemini-2.5-flash';
+      if (st.gmodel == null) st.gmodel = 'gemini-flash-latest';
       if (st.coachName == null) st.coachName = 'REX';
       if (st.coachTone == null) st.coachTone = 'spartan';
       if (st.theme == null) st.theme = 'auto';
@@ -3113,41 +3113,7 @@
           try {
             var summary = '';
             if (st.provider === 'gemini') {
-              var body = {
-                system_instruction: { parts: [{ text: coachSystem() }] },
-                contents: [
-                  {
-                    role: 'user',
-                    parts: [
-                      { inline_data: { mime_type: f.type, data: b64 } },
-                      { text: prompt },
-                    ],
-                  },
-                ],
-              };
-              var r = await fetch(
-                'https://generativelanguage.googleapis.com/v1beta/models/' +
-                  (st.gmodel || 'gemini-2.5-flash') +
-                  ':generateContent?key=' +
-                  encodeURIComponent(st.gkey),
-                {
-                  method: 'POST',
-                  headers: { 'content-type': 'application/json' },
-                  body: JSON.stringify(body),
-                },
-              );
-              if (!r.ok)
-                throw new Error(
-                  r.status + ' ' + (await r.text()).slice(0, 150),
-                );
-              var j = await r.json();
-              var txt = (
-                (((j.candidates || [])[0] || {}).content || {}).parts || []
-              )
-                .map(function (pp) {
-                  return pp.text || '';
-                })
-                .join('');
+              var txt = await geminiGenerate([{ role: 'user', parts: [{ inline_data: { mime_type: f.type, data: b64 } }, { text: prompt }] }]);
               var pa = parseGeminiActions(txt);
               summary = pa.notes.join(' / ') || pa.text.slice(0, 120);
             } else {
@@ -3576,8 +3542,9 @@
         var models =
           prov === 'gemini'
             ? [
-                ['gemini-2.5-flash', '빠름·무료 (2.5 Flash)'],
-                ['gemini-3.6-flash', '최신 (3.6 Flash)'],
+                ['gemini-flash-latest', '자동 (최신 Flash·권장)'],
+                ['gemini-2.5-flash', '2.5 Flash'],
+                ['gemini-2.0-flash', '2.0 Flash'],
               ]
             : [
                 ['claude-opus-4-8', '최고 성능 (Opus 4.8)'],
@@ -3586,7 +3553,7 @@
               ];
         var curModel =
           prov === 'gemini'
-            ? st.gmodel || 'gemini-2.5-flash'
+            ? st.gmodel || 'gemini-flash-latest'
             : st.model || 'claude-opus-4-8';
         var modSel = models
           .map(function (o) {
@@ -3653,6 +3620,35 @@
           '</p></div>'
         );
       }
+      async function geminiGenerate(contents) {
+        var sys = { parts: [{ text: coachSystem() }] };
+        async function call(model) {
+          return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(st.gkey), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ system_instruction: sys, contents: contents }) });
+        }
+        var r = await call(st.gmodel || 'gemini-flash-latest');
+        if (r.status === 404) {
+          var lm = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(st.gkey));
+          if (lm.ok) {
+            var mj = await lm.json();
+            var best = null, bestScore = -1;
+            (mj.models || []).forEach(function (mm) {
+              if ((mm.supportedGenerationMethods || []).indexOf('generateContent') < 0) return;
+              var nm2 = (mm.name || '').replace('models/', '');
+              if (!/flash/i.test(nm2)) return;
+              var s = 0;
+              if (/latest/.test(nm2)) s += 3;
+              if (/lite/.test(nm2)) s -= 2;
+              if (/2\.5|2\.0|3\./.test(nm2)) s += 2;
+              if (/exp|thinking|preview/.test(nm2)) s -= 1;
+              if (s > bestScore) { bestScore = s; best = nm2; }
+            });
+            if (best) { st.gmodel = best; save(); r = await call(best); }
+          }
+        }
+        if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 180));
+        var j = await r.json();
+        return ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(function (pp) { return pp.text || ''; }).join('');
+      }
       async function callGemini() {
         var contents = coachMsgs
           .filter(function (mm) {
@@ -3683,30 +3679,7 @@
           .filter(function (c) {
             return c.parts.length;
           });
-        var model = st.gmodel || 'gemini-2.5-flash';
-        var r = await fetch(
-          'https://generativelanguage.googleapis.com/v1beta/models/' +
-            model +
-            ':generateContent?key=' +
-            encodeURIComponent(st.gkey),
-          {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              system_instruction: { parts: [{ text: coachSystem() }] },
-              contents: contents,
-            }),
-          },
-        );
-        if (!r.ok)
-          throw new Error(r.status + ' ' + (await r.text()).slice(0, 200));
-        var j = await r.json();
-        var parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-        return parts
-          .map(function (pp) {
-            return pp.text || '';
-          })
-          .join('');
+        return await geminiGenerate(contents);
       }
       function parseGeminiActions(text) {
         var notes = [];
