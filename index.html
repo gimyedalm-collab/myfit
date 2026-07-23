@@ -955,6 +955,8 @@
       if (st.provider == null) st.provider = 'claude';
       if (st.gkey == null) st.gkey = '';
       if (st.gmodel == null) st.gmodel = 'gemini-2.5-flash';
+      if (st.coachName == null) st.coachName = 'REX';
+      if (st.coachTone == null) st.coachTone = 'spartan';
       if (st.theme == null) st.theme = 'auto';
       if (st.lastBackup == null) st.lastBackup = '';
       const save = () => localStorage.setItem(KEY, JSON.stringify(st));
@@ -2490,7 +2492,9 @@
           ' <small>' +
           c.date +
           ' · 세트 완료 시 ✓ 누르면 휴식 타이머</small></div><div class="wrap">' +
-          '<button class="btn gray small" style="margin:2px 0 8px" onclick="startTimer(GOALS[st.profile.goal].rest)">휴식 타이머 시작 (' + GOALS[st.profile.goal].rest + '초)</button>' +
+          '<button class="btn gray small" style="margin:2px 0 8px" onclick="startTimer(GOALS[st.profile.goal].rest)">휴식 타이머 시작 (' +
+          GOALS[st.profile.goal].rest +
+          '초)</button>' +
           c.ex
             .map(function (e, ei) {
               var last = lastFor(e.n);
@@ -3093,42 +3097,133 @@
         render();
       }
       async function inbodyPhoto(inp) {
-        if (!coachKey()) { alert('설정에서 AI 코치 API 키를 먼저 넣어주세요'); go('set'); return; }
-        var f = inp.files[0]; if (!f) return;
+        if (!coachKey()) {
+          alert('설정에서 AI 코치 API 키를 먼저 넣어주세요');
+          go('set');
+          return;
+        }
+        var f = inp.files[0];
+        if (!f) return;
         inp.value = '';
         var rd = new FileReader();
         rd.onload = async function () {
           var b64 = rd.result.split(',')[1];
-          var prompt = '이 인바디(체성분) 결과지 사진에서 체중(kg), 체지방률(%), 골격근량(kg), 있으면 허리둘레(cm)를 읽어서 기록해줘. 결과지가 아니면 아니라고만 답해.';
+          var prompt =
+            '이 인바디(체성분) 결과지 사진에서 체중(kg), 체지방률(%), 골격근량(kg), 있으면 허리둘레(cm)를 읽어서 기록해줘. 결과지가 아니면 아니라고만 답해.';
           try {
             var summary = '';
             if (st.provider === 'gemini') {
-              var body = { system_instruction: { parts: [{ text: coachSystem() }] }, contents: [{ role: 'user', parts: [{ inline_data: { mime_type: f.type, data: b64 } }, { text: prompt }] }] };
-              var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + (st.gmodel || 'gemini-2.5-flash') + ':generateContent?key=' + encodeURIComponent(st.gkey), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-              if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 150));
+              var body = {
+                system_instruction: { parts: [{ text: coachSystem() }] },
+                contents: [
+                  {
+                    role: 'user',
+                    parts: [
+                      { inline_data: { mime_type: f.type, data: b64 } },
+                      { text: prompt },
+                    ],
+                  },
+                ],
+              };
+              var r = await fetch(
+                'https://generativelanguage.googleapis.com/v1beta/models/' +
+                  (st.gmodel || 'gemini-2.5-flash') +
+                  ':generateContent?key=' +
+                  encodeURIComponent(st.gkey),
+                {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify(body),
+                },
+              );
+              if (!r.ok)
+                throw new Error(
+                  r.status + ' ' + (await r.text()).slice(0, 150),
+                );
               var j = await r.json();
-              var txt = ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(function (pp) { return pp.text || ''; }).join('');
+              var txt = (
+                (((j.candidates || [])[0] || {}).content || {}).parts || []
+              )
+                .map(function (pp) {
+                  return pp.text || '';
+                })
+                .join('');
               var pa = parseGeminiActions(txt);
               summary = pa.notes.join(' / ') || pa.text.slice(0, 120);
             } else {
-              var msgs = [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: f.type, data: b64 } }, { type: 'text', text: prompt }] }];
+              var msgs = [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'image',
+                      source: { type: 'base64', media_type: f.type, data: b64 },
+                    },
+                    { type: 'text', text: prompt },
+                  ],
+                },
+              ];
               while (true) {
-                var rr = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': st.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: st.model || 'claude-opus-4-8', max_tokens: 512, system: coachSystem(), tools: COACH_TOOLS, messages: msgs }) });
-                if (!rr.ok) throw new Error(rr.status + ' ' + (await rr.text()).slice(0, 150));
+                var rr = await fetch('https://api.anthropic.com/v1/messages', {
+                  method: 'POST',
+                  headers: {
+                    'content-type': 'application/json',
+                    'x-api-key': st.apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true',
+                  },
+                  body: JSON.stringify({
+                    model: st.model || 'claude-opus-4-8',
+                    max_tokens: 512,
+                    system: coachSystem(),
+                    tools: COACH_TOOLS,
+                    messages: msgs,
+                  }),
+                });
+                if (!rr.ok)
+                  throw new Error(
+                    rr.status + ' ' + (await rr.text()).slice(0, 150),
+                  );
                 var resp = await rr.json();
                 msgs.push({ role: 'assistant', content: resp.content });
                 if (resp.stop_reason === 'tool_use') {
-                  var results = resp.content.filter(function (b) { return b.type === 'tool_use'; }).map(function (b) { var out = execTool(b.name, b.input); if (b.name === 'log_inbody') summary = out; return { type: 'tool_result', tool_use_id: b.id, content: out }; });
+                  var results = resp.content
+                    .filter(function (b) {
+                      return b.type === 'tool_use';
+                    })
+                    .map(function (b) {
+                      var out = execTool(b.name, b.input);
+                      if (b.name === 'log_inbody') summary = out;
+                      return {
+                        type: 'tool_result',
+                        tool_use_id: b.id,
+                        content: out,
+                      };
+                    });
                   msgs.push({ role: 'user', content: results });
                   continue;
                 }
-                if (!summary) summary = resp.content.filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join(' ').slice(0, 120);
+                if (!summary)
+                  summary = resp.content
+                    .filter(function (b) {
+                      return b.type === 'text';
+                    })
+                    .map(function (b) {
+                      return b.text;
+                    })
+                    .join(' ')
+                    .slice(0, 120);
                 break;
               }
             }
             render();
-            alert(summary || '수치를 못 읽었어요. 더 선명한 결과지 사진으로 다시 시도해보세요.');
-          } catch (e) { alert('인식 오류: ' + e.message); }
+            alert(
+              summary ||
+                '수치를 못 읽었어요. 더 선명한 결과지 사진으로 다시 시도해보세요.',
+            );
+          } catch (e) {
+            alert('인식 오류: ' + e.message);
+          }
         };
         rd.readAsDataURL(f);
       }
@@ -3358,8 +3453,14 @@
             );
           })
           .join(' / ');
+        var nm = st.coachName || 'REX';
+        var persona =
+          st.coachTone === 'normal'
+            ? '너는 ' + nm + ', 사용자의 개인 헬스·식단 코치다. 한국어로 장식 이모지 없이 간결하고 실용적으로, 짧게 핵심부터 말한다.\n'
+            : '너의 이름은 ' + nm + '. 전설적인 스파르타식 퍼스널 트레이너다. 거칠고 직설적인 남자 반말로 말한다. 핑계를 절대 안 받아주고, 사용자가 약한 소리를 하거나 운동을 미루면 강하게 몰아붙여 자극한다. 짧고 강하게 때린다. 사용자가 이별 같은 힘든 일을 겪고 있으면 위로만 하지 말고 그 에너지를 헬스장에 쏟으라고 밀어붙인다. 예: "핑계 그만. 지금 가.", "그거 하나 못 들면서 뭘 포기해?". 다만 차별·비하 슬러(병신 같은 표현)나 진짜 인신공격·외모비하는 절대 쓰지 말고, 거친 헬스브로 톤으로만 밀어붙인다. 몰아붙이되 결국 해내게 만드는 게 목적이다. 사용자가 자해·극단적 위험 신호를 보이면 즉시 거친 톤을 멈추고 진지하게 도와라.\n' +
+          '역할 유지: 무게·세트 추천과 식단 기록 기능은 그대로 정확히 수행한다.\n';
         return (
-          '너는 사용자의 개인 헬스·식단 코치다. 한국어로, 장식 이모지 없이, 간결하고 실용적으로 답한다. 짧게 핵심부터 말하고 근거를 덧붙인다.\n' +
+          persona +
           '사용자 정보: 키 ' +
           (pf.h || '?') +
           'cm, 몸무게 ' +
@@ -3517,6 +3618,8 @@
           '=this.value;save()">' +
           modSel +
           '</select>' +
+          '<label class="f">코치 이름</label><input value="' + esc(st.coachName || 'REX') + '" onchange="st.coachName=this.value.trim()||\'REX\';save()">' +
+          '<label class="f">코치 성격</label><select onchange="st.coachTone=this.value;save()">' + [['spartan', '스파르타 (강하게 푸시)'], ['normal', '기본 (담백)']].map(function (o) { return '<option value="' + o[0] + '"' + ((st.coachTone || 'spartan') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
           '<p class="muted" style="margin-top:8px">' +
           help +
           '</p></div>'
