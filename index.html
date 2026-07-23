@@ -646,10 +646,41 @@
       body.dark .tip.warn a {
         color: #ff9d9d;
       }
-      .mrow { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 13px; }
-      .mlab { width: 46px; flex: none; color: #4e5968; }
-      .mrow .bar { flex: 1; margin: 0; }
-      .mval { width: 82px; flex: none; text-align: right; color: #8b95a1; font-size: 12px; }
+      .mrow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 7px 0;
+        font-size: 13px;
+      }
+      .mlab {
+        width: 46px;
+        flex: none;
+        color: #4e5968;
+      }
+      .mrow .bar {
+        flex: 1;
+        margin: 0;
+      }
+      .mval {
+        width: 82px;
+        flex: none;
+        text-align: right;
+        color: #8b95a1;
+        font-size: 12px;
+      }
+      .cbubble { max-width: 82%; padding: 10px 13px; border-radius: 14px; margin: 8px 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+      .cbubble.me { background: #3182f6; color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+      .cbubble.ai { background: #fff; border: 1px solid #edeff2; border-bottom-left-radius: 4px; }
+      body.dark .cbubble.ai { background: #212228; border-color: #2c2e36; }
+      .cbubble img { max-width: 180px; border-radius: 10px; display: block; }
+      .cnote { text-align: center; font-size: 12px; color: #8b95a1; margin: 8px 0; }
+      .coachbar { position: fixed; bottom: calc(58px + env(safe-area-inset-bottom)); left: 0; right: 0; background: #fff; border-top: 1px solid #e5e8eb; display: flex; gap: 8px; padding: 8px 12px; align-items: center; z-index: 12; }
+      body.dark .coachbar { background: #1c1d22; border-color: #2c2e36; }
+      .coachbar input[type='text'] { flex: 1; min-width: 0; }
+      .coachbar .cphoto { flex: none; background: #eef1f4; color: #4e5968; border-radius: 10px; padding: 11px 12px; font-size: 13px; cursor: pointer; }
+      body.dark .coachbar .cphoto { background: #2a2c33; color: #c5c9d1; }
+      .coachbar button { flex: none; border: 0; background: #3182f6; color: #fff; border-radius: 10px; padding: 11px 15px; font-size: 14px; font-weight: 700; cursor: pointer; }
     </style>
   </head>
   <body>
@@ -776,6 +807,9 @@
             <path d="M4 20V11M10 20V4M16 20v-6M3 20h18" /></svg></span
         >리포트
       </button>
+      <button id="nb-coach" onclick="go('coach')">
+        <span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4V5z"/><path d="M9 10h.01M13 10h.01"/></svg></span>코치
+      </button>
       <button id="nb-set" onclick="go('set')">
         <span
           ><svg
@@ -830,6 +864,8 @@
         cur: null,
       };
       st.routines = st.routines || [];
+      if (st.apiKey == null) st.apiKey = '';
+      if (st.model == null) st.model = 'claude-opus-4-8';
       if (st.theme == null) st.theme = 'auto';
       if (st.lastBackup == null) st.lastBackup = '';
       const save = () => localStorage.setItem(KEY, JSON.stringify(st));
@@ -1820,17 +1856,39 @@
       }
       // [이름, kcal, 단백질g, 탄수g, 지방g]
       const FOODS = [
-        ['백미밥 1공기', 300, 6, 66, 1],['현미밥 1공기', 280, 6, 58, 2],['오트밀 40g', 150, 5, 27, 3],
-        ['닭가슴살 100g', 110, 23, 0, 2],['닭가슴살 200g', 220, 46, 0, 4],['닭다리살 100g', 190, 19, 0, 12],
-        ['계란 1개', 75, 6, 1, 5],['계란흰자 2개', 34, 7, 0, 0],['참치캔 1개', 100, 22, 0, 1],
-        ['소고기 살코기 100g', 180, 26, 0, 8],['삼겹살 200g', 660, 34, 0, 58],['연어 100g', 208, 20, 0, 13],
-        ['두부 반모 150g', 120, 13, 3, 7],['그릭요거트 100g', 60, 10, 4, 0],['우유 200ml', 125, 7, 10, 7],
-        ['프로틴 쉐이크 1스쿱', 120, 24, 3, 2],['고구마 1개', 130, 2, 30, 0],['바나나 1개', 90, 1, 23, 0],
-        ['사과 1개', 95, 0, 25, 0],['견과류 30g', 180, 6, 6, 15],['샐러드(드레싱)', 150, 3, 12, 9],
-        ['김밥 1줄', 480, 12, 80, 10],['비빔밥', 560, 18, 90, 12],['김치찌개 1인분', 250, 15, 12, 14],
-        ['된장찌개 1인분', 200, 12, 15, 9],['라면 1개', 500, 10, 79, 16],['샌드위치', 350, 15, 40, 13],
-        ['치킨 2조각', 400, 30, 15, 24],['피자 2조각', 560, 24, 60, 24],['닭+현미+야채 도시락', 450, 35, 45, 10],
-        ['고구마+계란 도시락', 250, 10, 32, 6],['아메리카노', 10, 0, 2, 0],['제로콜라', 1, 0, 0, 0],
+        ['백미밥 1공기', 300, 6, 66, 1],
+        ['현미밥 1공기', 280, 6, 58, 2],
+        ['오트밀 40g', 150, 5, 27, 3],
+        ['닭가슴살 100g', 110, 23, 0, 2],
+        ['닭가슴살 200g', 220, 46, 0, 4],
+        ['닭다리살 100g', 190, 19, 0, 12],
+        ['계란 1개', 75, 6, 1, 5],
+        ['계란흰자 2개', 34, 7, 0, 0],
+        ['참치캔 1개', 100, 22, 0, 1],
+        ['소고기 살코기 100g', 180, 26, 0, 8],
+        ['삼겹살 200g', 660, 34, 0, 58],
+        ['연어 100g', 208, 20, 0, 13],
+        ['두부 반모 150g', 120, 13, 3, 7],
+        ['그릭요거트 100g', 60, 10, 4, 0],
+        ['우유 200ml', 125, 7, 10, 7],
+        ['프로틴 쉐이크 1스쿱', 120, 24, 3, 2],
+        ['고구마 1개', 130, 2, 30, 0],
+        ['바나나 1개', 90, 1, 23, 0],
+        ['사과 1개', 95, 0, 25, 0],
+        ['견과류 30g', 180, 6, 6, 15],
+        ['샐러드(드레싱)', 150, 3, 12, 9],
+        ['김밥 1줄', 480, 12, 80, 10],
+        ['비빔밥', 560, 18, 90, 12],
+        ['김치찌개 1인분', 250, 15, 12, 14],
+        ['된장찌개 1인분', 200, 12, 15, 9],
+        ['라면 1개', 500, 10, 79, 16],
+        ['샌드위치', 350, 15, 40, 13],
+        ['치킨 2조각', 400, 30, 15, 24],
+        ['피자 2조각', 560, 24, 60, 24],
+        ['닭+현미+야채 도시락', 450, 35, 45, 10],
+        ['고구마+계란 도시락', 250, 10, 32, 6],
+        ['아메리카노', 10, 0, 2, 0],
+        ['제로콜라', 1, 0, 0, 0],
       ];
 
       // ===== 추천 로직 =====
@@ -1970,9 +2028,10 @@
       function go(t) {
         tab = t;
         render();
+        if (t === 'coach') { var w = $('coachwrap'); if (w) window.scrollTo(0, document.body.scrollHeight); }
       }
       function render() {
-        ['home', 'work', 'meal', 'rep', 'set'].forEach((t) =>
+        ['home', 'work', 'meal', 'rep', 'coach', 'set'].forEach((t) =>
           $('nb-' + t).classList.toggle('on', t === tab),
         );
         $('app').innerHTML = {
@@ -1980,6 +2039,7 @@
           work: work,
           meal: meal,
           rep: rep,
+          coach: coach,
           set: setting,
         }[tab]();
       }
@@ -2572,7 +2632,8 @@
 
       // ===== 식단 =====
       function macroTargets() {
-        var w = +st.profile.w, kcal = kcalTarget();
+        var w = +st.profile.w,
+          kcal = kcalTarget();
         if (!w || !kcal) return null;
         var g = st.profile.goal;
         var pk = g === 'diet' ? 2.0 : g === 'bulk' ? 1.9 : 1.6;
@@ -2583,61 +2644,164 @@
         return { kcal: kcal, protein: protein, carb: carb, fat: fat };
       }
       function todayMacros() {
-        var list = st.meals[td()] || [], r = { k: 0, p: 0, c: 0, f: 0 };
-        list.forEach(function (m) { r.k += +m.k || 0; r.p += +m.p || 0; r.c += +m.c || 0; r.f += +m.f || 0; });
+        var list = st.meals[td()] || [],
+          r = { k: 0, p: 0, c: 0, f: 0 };
+        list.forEach(function (m) {
+          r.k += +m.k || 0;
+          r.p += +m.p || 0;
+          r.c += +m.c || 0;
+          r.f += +m.f || 0;
+        });
         return r;
       }
       function mealRecommend() {
-        var t = macroTargets(); if (!t) return null;
+        var t = macroTargets();
+        if (!t) return null;
         var m = todayMacros();
-        var remK = t.kcal - m.k, remP = Math.round(t.protein - m.p);
+        var remK = t.kcal - m.k,
+          remP = Math.round(t.protein - m.p);
         var msg;
-        if (remK <= 0 && remP <= 0) msg = '오늘 목표를 다 채웠어요. 여기서 마무리해도 좋아요.';
-        else if (remK <= 150 && remP > 12) msg = '칼로리는 거의 찼는데 단백질이 ' + remP + 'g 모자라요. 저칼로리 고단백으로 채우세요.';
-        else if (remP > 25) msg = '단백질이 ' + remP + 'g 부족해요. 아래에서 단백질 위주로 채우면 좋아요.';
-        else if (remK > 400) msg = '아직 ' + Math.max(0, Math.round(remK)) + 'kcal 남았어요. 아래에서 골라 드세요.';
+        if (remK <= 0 && remP <= 0)
+          msg = '오늘 목표를 다 채웠어요. 여기서 마무리해도 좋아요.';
+        else if (remK <= 150 && remP > 12)
+          msg =
+            '칼로리는 거의 찼는데 단백질이 ' +
+            remP +
+            'g 모자라요. 저칼로리 고단백으로 채우세요.';
+        else if (remP > 25)
+          msg =
+            '단백질이 ' +
+            remP +
+            'g 부족해요. 아래에서 단백질 위주로 채우면 좋아요.';
+        else if (remK > 400)
+          msg =
+            '아직 ' +
+            Math.max(0, Math.round(remK)) +
+            'kcal 남았어요. 아래에서 골라 드세요.';
         else msg = '거의 다 왔어요. 가볍게 마무리하세요.';
         var pool;
-        if (remP > 12) pool = FOODS.slice().sort(function (a, b) { return b[2] / (b[1] || 1) - a[2] / (a[1] || 1); });
-        else { var tg = Math.max(120, remK / 2); pool = FOODS.slice().sort(function (a, b) { return Math.abs(a[1] - tg) - Math.abs(b[1] - tg); }); }
+        if (remP > 12)
+          pool = FOODS.slice().sort(function (a, b) {
+            return b[2] / (b[1] || 1) - a[2] / (a[1] || 1);
+          });
+        else {
+          var tg = Math.max(120, remK / 2);
+          pool = FOODS.slice().sort(function (a, b) {
+            return Math.abs(a[1] - tg) - Math.abs(b[1] - tg);
+          });
+        }
         return { msg: msg, items: pool.slice(0, 3) };
       }
       function mbar(label, val, tgt, color) {
         var pct = tgt ? Math.min(100, (val / tgt) * 100) : 0;
-        return '<div class="mrow"><span class="mlab">' + label + '</span><div class="bar"><i style="width:' + pct + '%;background:' + color + '"></i></div><span class="mval">' + Math.round(val) + '/' + tgt + 'g</span></div>';
+        return (
+          '<div class="mrow"><span class="mlab">' +
+          label +
+          '</span><div class="bar"><i style="width:' +
+          pct +
+          '%;background:' +
+          color +
+          '"></i></div><span class="mval">' +
+          Math.round(val) +
+          '/' +
+          tgt +
+          'g</span></div>'
+        );
       }
       function meal() {
-        var list = st.meals[td()] || [], t = macroTargets(), m = todayMacros(), kt = kcalTarget();
+        var list = st.meals[td()] || [],
+          t = macroTargets(),
+          m = todayMacros(),
+          kt = kcalTarget();
         var rec = t ? mealRecommend() : null;
         return (
-          '<div class="top">오늘 식단 <small>' + td() + (kt ? ' · ' + m.k + ' / ' + kt + ' kcal' : '') + '</small></div><div class="wrap">' +
+          '<div class="top">오늘 식단 <small>' +
+          td() +
+          (kt ? ' · ' + m.k + ' / ' + kt + ' kcal' : '') +
+          '</small></div><div class="wrap">' +
           (t
             ? '<div class="card"><h3>오늘 목표</h3>' +
-              '<div class="mrow"><span class="mlab">칼로리</span><div class="bar"><i style="width:' + Math.min(100, (m.k / t.kcal) * 100) + '%;background:' + (m.k > t.kcal * 1.15 ? '#e5484d' : '#3182f6') + '"></i></div><span class="mval">' + m.k + '/' + t.kcal + '</span></div>' +
+              '<div class="mrow"><span class="mlab">칼로리</span><div class="bar"><i style="width:' +
+              Math.min(100, (m.k / t.kcal) * 100) +
+              '%;background:' +
+              (m.k > t.kcal * 1.15 ? '#e5484d' : '#3182f6') +
+              '"></i></div><span class="mval">' +
+              m.k +
+              '/' +
+              t.kcal +
+              '</span></div>' +
               mbar('단백질', m.p, t.protein, '#12b886') +
               mbar('탄수', m.c, t.carb, '#4dabf7') +
               mbar('지방', m.f, t.fat, '#f59f00') +
               '</div>'
             : '<div class="card muted">설정에서 몸무게·목표를 넣으면 칼로리·단백질 목표를 계산해줘요.</div>') +
           (rec
-            ? '<div class="card"><h3>오늘 뭐 먹지?</h3><p class="muted" style="margin-bottom:6px">' + esc(rec.msg) + '</p>' +
-              rec.items.map(function (f) { var i = FOODS.indexOf(f); return '<div class="meal-item"><span>' + esc(f[0]) + ' <span class="muted">' + f[1] + 'kcal · 단백 ' + f[2] + 'g</span></span><button class="btn small" style="flex:none" onclick="addMealF(' + i + ')">추가</button></div>'; }).join('') +
+            ? '<div class="card"><h3>오늘 뭐 먹지?</h3><p class="muted" style="margin-bottom:6px">' +
+              esc(rec.msg) +
+              '</p>' +
+              rec.items
+                .map(function (f) {
+                  var i = FOODS.indexOf(f);
+                  return (
+                    '<div class="meal-item"><span>' +
+                    esc(f[0]) +
+                    ' <span class="muted">' +
+                    f[1] +
+                    'kcal · 단백 ' +
+                    f[2] +
+                    'g</span></span><button class="btn small" style="flex:none" onclick="addMealF(' +
+                    i +
+                    ')">추가</button></div>'
+                  );
+                })
+                .join('') +
               '</div>'
             : '') +
           '<div class="card"><h3>빠른 추가</h3>' +
-          FOODS.map(function (f, i) { return '<span class="chip" onclick="addMealF(' + i + ')">' + esc(f[0]) + ' <span style="opacity:.55">' + f[1] + '</span></span>'; }).join('') +
+          FOODS.map(function (f, i) {
+            return (
+              '<span class="chip" onclick="addMealF(' +
+              i +
+              ')">' +
+              esc(f[0]) +
+              ' <span style="opacity:.55">' +
+              f[1] +
+              '</span></span>'
+            );
+          }).join('') +
           '</div>' +
           '<div class="card"><h3>직접 입력</h3><div class="row"><input id="mn" placeholder="음식 이름"><input id="mk" inputmode="numeric" placeholder="kcal" style="max-width:78px;flex:none"><input id="mp" inputmode="numeric" placeholder="단백g" style="max-width:70px;flex:none"></div><br><button class="btn gray" onclick="addMeal($(\'mn\').value,$(\'mk\').value,$(\'mp\').value)">추가</button></div>' +
           '<div class="card"><h3>오늘 먹은 것</h3>' +
           (list.length
-            ? list.map(function (m2, i) { return '<div class="meal-item"><span>' + esc(m2.n) + (m2.p ? ' <span class="muted">단백 ' + m2.p + 'g</span>' : '') + '</span><span>' + m2.k + ' kcal <button class="del" onclick="delMeal(' + i + ')">✕</button></span></div>'; }).join('')
+            ? list
+                .map(function (m2, i) {
+                  return (
+                    '<div class="meal-item"><span>' +
+                    esc(m2.n) +
+                    (m2.p
+                      ? ' <span class="muted">단백 ' + m2.p + 'g</span>'
+                      : '') +
+                    '</span><span>' +
+                    m2.k +
+                    ' kcal <button class="del" onclick="delMeal(' +
+                    i +
+                    ')">✕</button></span></div>'
+                  );
+                })
+                .join('')
             : '<p class="muted">아직 기록이 없어요. 위에서 추가하세요.</p>') +
           '</div></div>'
         );
       }
       function addMealF(i) {
         var f = FOODS[i];
-        (st.meals[td()] = st.meals[td()] || []).push({ n: f[0], k: f[1], p: f[2], c: f[3], f: f[4] });
+        (st.meals[td()] = st.meals[td()] || []).push({
+          n: f[0],
+          k: f[1],
+          p: f[2],
+          c: f[3],
+          f: f[4],
+        });
         save();
         render();
       }
@@ -2646,7 +2810,13 @@
           alert('음식 이름과 칼로리를 넣어주세요');
           return;
         }
-        (st.meals[td()] = st.meals[td()] || []).push({ n: n, k: +k, p: +pr || 0, c: 0, f: 0 });
+        (st.meals[td()] = st.meals[td()] || []).push({
+          n: n,
+          k: +k,
+          p: +pr || 0,
+          c: 0,
+          f: 0,
+        });
         save();
         render();
       }
@@ -2878,6 +3048,7 @@
               '</span>',
           ).join('') +
           '</div>' +
+          '<div class="card"><h3>AI 코치</h3><p class="muted">밥 사진·설명을 올리면 칼로리를 계산하고, 내 기록에 맞춰 무게·강도를 추천해요. Anthropic API 키가 필요합니다(키는 이 기기에만 저장, 외부 유출 없음).</p><label class="f">API 키</label><input type="password" value="' + esc(st.apiKey || '') + '" placeholder="sk-ant-..." onchange="st.apiKey=this.value.trim();save()"><label class="f">모델</label><select onchange="st.model=this.value;save()">' + [['claude-opus-4-8','최고 성능 (Opus 4.8)'],['claude-sonnet-5','균형 (Sonnet 5)'],['claude-haiku-4-5','저렴·빠름 (Haiku 4.5)']].map(function(o){return '<option value="'+o[0]+'"'+((st.model||'claude-opus-4-8')===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('') + '</select><p class="muted" style="margin-top:8px">키 발급: console.anthropic.com → API Keys. 사용한 만큼만 소액 과금돼요.</p></div>' +
           '<div class="card"><h3>화면 테마</h3><div class="seg">' +
           [
             ['auto', '자동'],
@@ -2982,6 +3153,126 @@
 
       if ('serviceWorker' in navigator && location.protocol.startsWith('http'))
         navigator.serviceWorker.register('sw.js');
+      // ===== AI 코치 =====
+      var coachMsgs = [];
+      var coachBusy = false;
+      const COACH_TOOLS = [
+        { name: 'log_food', description: '사용자가 먹은 음식을 오늘 식단에 기록한다. 사진이나 설명에서 음식을 파악해 각 항목의 칼로리와 매크로(단백질/탄수/지방 g)를 추정해 기록한다.', input_schema: { type: 'object', properties: { items: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, kcal: { type: 'number' }, protein: { type: 'number' }, carb: { type: 'number' }, fat: { type: 'number' } }, required: ['name', 'kcal', 'protein', 'carb', 'fat'] } } }, required: ['items'] } },
+        { name: 'log_inbody', description: '인바디(체성분) 결과를 기록한다. 결과지 사진에서 체중(kg)·체지방률(%)·골격근량 등을 읽어 기록한다.', input_schema: { type: 'object', properties: { weight: { type: 'number' }, bodyFat: { type: 'number' }, muscle: { type: 'number' }, waist: { type: 'number' }, arm: { type: 'number' } }, required: ['weight'] } },
+      ];
+      function coachSystem() {
+        var pf = st.profile, t = macroTargets(), m = todayMacros();
+        var recent = st.logs.slice(-5).reverse().map(function (l) { return l.date + ' ' + l.day + '(' + l.ex.map(function (e) { var pr = prFor(e.n); return e.n + (pr.kg ? ' ' + pr.kg + 'kg' : ''); }).join(', ') + ')'; }).join(' / ');
+        return (
+          '너는 사용자의 개인 헬스·식단 코치다. 한국어로, 장식 이모지 없이, 간결하고 실용적으로 답한다. 짧게 핵심부터 말하고 근거를 덧붙인다.\n' +
+          '사용자 정보: 키 ' + (pf.h || '?') + 'cm, 몸무게 ' + (pf.w || '?') + 'kg, 목표 ' + GOALS[pf.goal].t + ', ' + pf.split + '분할.\n' +
+          (t ? '오늘 목표: ' + t.kcal + 'kcal / 단백질 ' + t.protein + 'g / 탄수 ' + t.carb + 'g / 지방 ' + t.fat + 'g. 현재 섭취: ' + m.k + 'kcal / 단백질 ' + Math.round(m.p) + 'g.\n' : '') +
+          '최근 운동(종목·최고중량): ' + (recent || '기록 없음') + '.\n' +
+          '역할: (1) 무게·세트·강도 추천은 위 기록과 몸무게·목표를 근거로 구체적인 숫자로. (2) 사용자가 먹은 음식을 사진이나 글로 올리면 log_food 도구로 칼로리·매크로를 추정해 기록하고, 무엇을 얼마로 기록했는지 한 줄로 요약한다. (3) 인바디 결과지 사진을 올리면 log_inbody 도구로 수치를 기록한다. 추정은 대략치임을 처음 한 번만 짧게 알린다.'
+        );
+      }
+      function execTool(name, input) {
+        try {
+          if (name === 'log_food') {
+            var list = (st.meals[td()] = st.meals[td()] || []);
+            (input.items || []).forEach(function (it) { list.push({ n: it.name, k: Math.round(+it.kcal || 0), p: Math.round(+it.protein || 0), c: Math.round(+it.carb || 0), f: Math.round(+it.fat || 0) }); });
+            save();
+            return '기록됨: ' + (input.items || []).map(function (it) { return it.name + ' ' + Math.round(+it.kcal || 0) + 'kcal'; }).join(', ');
+          }
+          if (name === 'log_inbody') {
+            st.body = st.body.filter(function (b) { return b.date !== td(); });
+            st.body.push({ date: td(), w: +input.weight || 0, f: +input.bodyFat || '', muscle: +input.muscle || '', waist: +input.waist || '', arm: +input.arm || '' });
+            if (+input.weight) st.profile.w = +input.weight;
+            save();
+            return '인바디 기록됨: 체중 ' + input.weight + 'kg' + (input.bodyFat ? ', 체지방 ' + input.bodyFat + '%' : '') + (input.muscle ? ', 골격근 ' + input.muscle + 'kg' : '');
+          }
+        } catch (e) { return '기록 실패: ' + e.message; }
+        return '알 수 없는 도구';
+      }
+      async function callClaude() {
+        var r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': st.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+          body: JSON.stringify({ model: st.model || 'claude-opus-4-8', max_tokens: 1024, system: coachSystem(), tools: COACH_TOOLS, messages: coachMsgs }),
+        });
+        if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 200));
+        return r.json();
+      }
+      async function coachSend(content) {
+        if (!st.apiKey) { alert('설정에서 API 키를 먼저 넣어주세요'); go('set'); return; }
+        if (coachBusy) return;
+        coachBusy = true;
+        coachMsgs.push({ role: 'user', content: content });
+        render();
+        try {
+          while (true) {
+            var resp = await callClaude();
+            coachMsgs.push({ role: 'assistant', content: resp.content });
+            if (resp.stop_reason === 'tool_use') {
+              var results = resp.content.filter(function (b) { return b.type === 'tool_use'; }).map(function (b) { return { type: 'tool_result', tool_use_id: b.id, content: execTool(b.name, b.input) }; });
+              coachMsgs.push({ role: 'user', content: results });
+              render();
+              continue;
+            }
+            break;
+          }
+        } catch (e) {
+          coachMsgs.push({ role: 'assistant', content: [{ type: 'text', text: '오류: ' + e.message }] });
+        }
+        coachBusy = false;
+        render();
+      }
+      function coachText() {
+        var el = $('coachin'); if (!el) return;
+        var v = el.value.trim(); if (!v) return;
+        el.value = '';
+        coachSend([{ type: 'text', text: v }]);
+      }
+      function coachPhoto(inp) {
+        var f = inp.files[0]; if (!f) return;
+        var rd = new FileReader();
+        rd.onload = function () {
+          var b64 = rd.result.split(',')[1];
+          coachSend([{ type: 'image', source: { type: 'base64', media_type: f.type, data: b64 } }, { type: 'text', text: '이 사진 분석해서 기록해줘.' }]);
+        };
+        rd.readAsDataURL(inp.files[0]);
+      }
+      function coach() {
+        var body;
+        if (!st.apiKey) {
+          body = '<div class="card muted">AI 코치를 쓰려면 설정에서 Anthropic API 키를 먼저 넣어주세요. 밥 사진을 올리면 칼로리를 계산하고, 내 기록에 맞춰 무게·강도를 추천해줘요.</div>';
+        } else if (!coachMsgs.length) {
+          body = '<div class="card muted">무엇이든 물어보세요. 예: "오늘 뭐부터 할까?", "벤치 무게 얼마로?", 먹은 밥 사진을 올리면 칼로리를 기록해줘요.</div>';
+        } else {
+          body = coachMsgs.map(function (msg) {
+            if (msg.role === 'user') {
+              if (typeof msg.content === 'string') return '';
+              return msg.content.map(function (b) {
+                if (b.type === 'text') return '<div class="cbubble me">' + esc(b.text) + '</div>';
+                if (b.type === 'image') return '<div class="cbubble me"><img src="data:' + b.source.media_type + ';base64,' + b.source.data + '"></div>';
+                return '';
+              }).join('');
+            }
+            if (msg.role === 'assistant') {
+              return msg.content.map(function (b) {
+                if (b.type === 'text' && b.text.trim()) return '<div class="cbubble ai">' + esc(b.text) + '</div>';
+                if (b.type === 'tool_use') return '<div class="cnote">기록 중...</div>';
+                return '';
+              }).join('');
+            }
+            return '';
+          }).join('');
+          if (coachBusy) body += '<div class="cnote">코치가 생각 중...</div>';
+        }
+        return (
+          '<div class="top">AI 코치 <small>내 기록 기반 추천 · 밥 사진 칼로리 계산 · 인바디 인식</small></div>' +
+          '<div class="wrap" id="coachwrap" style="padding-bottom:70px">' + body + '</div>' +
+          (st.apiKey
+            ? '<div class="coachbar"><label class="cphoto">사진<input type="file" accept="image/*" style="display:none" onchange="coachPhoto(this)"></label>' +
+              '<input type="text" id="coachin" placeholder="무게 추천, 먹은 음식..." onkeydown="if(event.key===\'Enter\')coachText()"><button onclick="coachText()">전송</button></div>'
+            : '')
+        );
+      }
       applyTheme();
       render();
     </script>
