@@ -955,6 +955,8 @@
       if (st.provider == null) st.provider = 'claude';
       if (st.gkey == null) st.gkey = '';
       if (st.gmodel == null) st.gmodel = 'gemini-flash-latest';
+      if (st.coachMemory == null) st.coachMemory = '';
+      if (st.coachMsgs == null) st.coachMsgs = [];
       if (st.coachName == null) st.coachName = 'REX';
       if (st.coachTone == null) st.coachTone = 'spartan';
       if (st.theme == null) st.theme = 'auto';
@@ -3113,7 +3115,15 @@
           try {
             var summary = '';
             if (st.provider === 'gemini') {
-              var txt = await geminiGenerate([{ role: 'user', parts: [{ inline_data: { mime_type: f.type, data: b64 } }, { text: prompt }] }]);
+              var txt = await geminiGenerate([
+                {
+                  role: 'user',
+                  parts: [
+                    { inline_data: { mime_type: f.type, data: b64 } },
+                    { text: prompt },
+                  ],
+                },
+              ]);
               var pa = parseGeminiActions(txt);
               summary = pa.notes.join(' / ') || pa.text.slice(0, 120);
             } else {
@@ -3351,7 +3361,7 @@
       if ('serviceWorker' in navigator && location.protocol.startsWith('http'))
         navigator.serviceWorker.register('sw.js');
       // ===== AI 코치 =====
-      var coachMsgs = [];
+      var coachMsgs = st.coachMsgs || [];
       var coachBusy = false;
       const COACH_TOOLS = [
         {
@@ -3393,6 +3403,16 @@
               arm: { type: 'number' },
             },
             required: ['weight'],
+          },
+        },
+        {
+          name: 'save_memory',
+          description:
+            '사용자에 대해 앞으로도 계속 기억해야 할 지속적 사실만 저장한다(목표 변화, 부상·통증, 선호·싫어하는 운동, 운동 가능 요일/시간, 동기부여 포인트, 중요한 신상 등). 일시적 잡담이나 오늘 하루치 정보는 저장하지 마라.',
+          input_schema: {
+            type: 'object',
+            properties: { note: { type: 'string' } },
+            required: ['note'],
           },
         },
       ];
@@ -3462,12 +3482,29 @@
           '최근 운동(종목·최고중량): ' +
           (recent || '기록 없음') +
           '.\n' +
-          '역할: (1) 무게·세트·강도 추천은 위 기록과 몸무게·목표를 근거로 구체적인 숫자로. (2) 사용자가 먹은 음식을 사진이나 글로 올리면 log_food 도구로 칼로리·매크로를 추정해 기록하고, 무엇을 얼마로 기록했는지 한 줄로 요약한다. (3) 인바디 결과지 사진을 올리면 log_inbody 도구로 수치를 기록한다. 추정은 대략치임을 처음 한 번만 짧게 알린다.' +
+          (st.coachMemory
+            ? '이전 대화에서 기억한 이 사용자에 대한 사실:\n' +
+              st.coachMemory +
+              '\n'
+            : '') +
+          '역할: (1) 무게·세트·강도 추천은 위 기록과 몸무게·목표를 근거로 구체적인 숫자로. (2) 사용자가 먹은 음식을 사진이나 글로 올리면 log_food로 칼로리·매크로를 추정해 기록하고 한 줄로 요약. (3) 인바디 결과지 사진은 log_inbody로 기록. (4) 앞으로도 계속 참고해야 할 지속적 사실(목표·부상·선호·일정·동기포인트 등)을 알게 되면 save_memory로 저장해 다음 대화에 활용한다. 추정은 대략치임을 처음 한 번만 짧게 알린다.' +
           (st.provider === 'gemini' ? GEMINI_MARK : '')
         );
       }
       function execTool(name, input) {
         try {
+          if (name === 'save_memory') {
+            var nt = String(input.note || '').trim();
+            if (nt) {
+              st.coachMemory = (
+                (st.coachMemory ? st.coachMemory + '\n' : '') +
+                '- ' +
+                nt
+              ).slice(-2000);
+              save();
+            }
+            return '기억함: ' + nt;
+          }
           if (name === 'log_food') {
             var list = (st.meals[td()] = st.meals[td()] || []);
             (input.items || []).forEach(function (it) {
@@ -3517,7 +3554,7 @@
         return '알 수 없는 도구';
       }
       const GEMINI_MARK =
-        '\n\n[중요 규칙] 음식을 기록해야 하면 답변 맨 끝에 다음 형식의 줄을 정확히 붙인다(사용자에게는 숨겨지니 설명하지 말 것): @@LOG_FOOD {"items":[{"name":"닭가슴살 100g","kcal":110,"protein":23,"carb":0,"fat":2}]}  인바디 결과지면: @@LOG_INBODY {"weight":74,"bodyFat":17,"muscle":34}  이 줄 외에는 log_food 같은 도구 이름을 언급하지 않는다.';
+        '\n\n[중요 규칙] 음식을 기록해야 하면 답변 맨 끝에 다음 형식의 줄을 정확히 붙인다(사용자에게는 숨겨지니 설명하지 말 것): @@LOG_FOOD {"items":[{"name":"닭가슴살 100g","kcal":110,"protein":23,"carb":0,"fat":2}]}  인바디 결과지면: @@LOG_INBODY {"weight":74,"bodyFat":17,"muscle":34}  앞으로도 기억할 지속적 사실이 생기면: @@MEMORY {"note":"..."}  이 줄들은 사용자에게 숨겨지니 도구 이름을 언급하지 않는다.';
       function coachKey() {
         return st.provider === 'gemini' ? st.gkey : st.apiKey;
       }
@@ -3623,16 +3660,38 @@
       async function geminiGenerate(contents) {
         var sys = { parts: [{ text: coachSystem() }] };
         async function call(model) {
-          return fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(st.gkey), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ system_instruction: sys, contents: contents }) });
+          return fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models/' +
+              model +
+              ':generateContent?key=' +
+              encodeURIComponent(st.gkey),
+            {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                system_instruction: sys,
+                contents: contents,
+              }),
+            },
+          );
         }
         var r = await call(st.gmodel || 'gemini-flash-latest');
         if (r.status === 404) {
-          var lm = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(st.gkey));
+          var lm = await fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models?key=' +
+              encodeURIComponent(st.gkey),
+          );
           if (lm.ok) {
             var mj = await lm.json();
-            var best = null, bestScore = -1;
+            var best = null,
+              bestScore = -1;
             (mj.models || []).forEach(function (mm) {
-              if ((mm.supportedGenerationMethods || []).indexOf('generateContent') < 0) return;
+              if (
+                (mm.supportedGenerationMethods || []).indexOf(
+                  'generateContent',
+                ) < 0
+              )
+                return;
               var nm2 = (mm.name || '').replace('models/', '');
               if (!/flash/i.test(nm2)) return;
               var s = 0;
@@ -3640,14 +3699,26 @@
               if (/lite/.test(nm2)) s -= 2;
               if (/2\.5|2\.0|3\./.test(nm2)) s += 2;
               if (/exp|thinking|preview/.test(nm2)) s -= 1;
-              if (s > bestScore) { bestScore = s; best = nm2; }
+              if (s > bestScore) {
+                bestScore = s;
+                best = nm2;
+              }
             });
-            if (best) { st.gmodel = best; save(); r = await call(best); }
+            if (best) {
+              st.gmodel = best;
+              save();
+              r = await call(best);
+            }
           }
         }
-        if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 180));
+        if (!r.ok)
+          throw new Error(r.status + ' ' + (await r.text()).slice(0, 180));
         var j = await r.json();
-        return ((((j.candidates || [])[0] || {}).content || {}).parts || []).map(function (pp) { return pp.text || ''; }).join('');
+        return ((((j.candidates || [])[0] || {}).content || {}).parts || [])
+          .map(function (pp) {
+            return pp.text || '';
+          })
+          .join('');
       }
       async function callGemini() {
         var contents = coachMsgs
@@ -3683,13 +3754,17 @@
       }
       function parseGeminiActions(text) {
         var notes = [];
-        var re = /@@(LOG_FOOD|LOG_INBODY)\s*(\{[\s\S]*?\})/g,
+        var re = /@@(LOG_FOOD|LOG_INBODY|MEMORY)\s*(\{[\s\S]*?\})/g,
           mch;
         while ((mch = re.exec(text))) {
           try {
             notes.push(
               execTool(
-                mch[1] === 'LOG_FOOD' ? 'log_food' : 'log_inbody',
+                mch[1] === 'LOG_FOOD'
+                  ? 'log_food'
+                  : mch[1] === 'MEMORY'
+                    ? 'save_memory'
+                    : 'log_inbody',
                 JSON.parse(mch[2]),
               ),
             );
@@ -3697,7 +3772,7 @@
         }
         return {
           text: text
-            .replace(/@@(LOG_FOOD|LOG_INBODY)\s*\{[\s\S]*?\}/g, '')
+            .replace(/@@(LOG_FOOD|LOG_INBODY|MEMORY)\s*\{[\s\S]*?\}/g, '')
             .trim(),
           notes: notes,
         };
@@ -3774,7 +3849,29 @@
           });
         }
         coachBusy = false;
+        saveCoach();
         render();
+      }
+      function saveCoach() {
+        var trimmed = coachMsgs.slice(-16).map(function (mm) {
+          if (!Array.isArray(mm.content)) return mm;
+          return {
+            role: mm.role,
+            content: mm.content.map(function (b) {
+              return b.type === 'image' ? { type: 'text', text: '[사진]' } : b;
+            }),
+          };
+        });
+        st.coachMsgs = trimmed;
+        save();
+      }
+      function clearCoach() {
+        if (confirm('이 대화를 지울까요? (코치가 기억한 내용은 유지됩니다)')) {
+          coachMsgs = [];
+          st.coachMsgs = [];
+          save();
+          render();
+        }
       }
       function coachText() {
         var el = $('coachin');
@@ -3852,6 +3949,9 @@
         return (
           '<div class="top">AI 코치 <small>내 기록 기반 추천 · 밥 사진 칼로리 계산 · 인바디 인식</small></div>' +
           '<div class="wrap" id="coachwrap" style="padding-bottom:70px">' +
+          (coachMsgs.length
+            ? '<div style="text-align:right;margin-bottom:4px"><button class="btn gray small" onclick="clearCoach()">대화 지우기</button></div>'
+            : '') +
           body +
           '</div>' +
           (coachKey()
