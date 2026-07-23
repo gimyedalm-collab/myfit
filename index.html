@@ -151,7 +151,11 @@
       .nav button span {
         display: block;
         font-size: 21px;
-        margin-bottom: 1px;
+        margin-bottom: 2px;
+      }
+      .nav button span svg {
+        display: block;
+        margin: 0 auto;
       }
       .exname {
         font-weight: 700;
@@ -623,11 +627,25 @@
           stroke-dashoffset: 0;
         }
       }
-      .tip.warn { background: #fdecec; color: #c0392b; }
-      .tip.warn a { color: #c0392b; font-weight: 700; }
-      body.dark .tip { background: #2a2617; color: #e0cf92; }
-      body.dark .tip.warn { background: #3a2020; color: #f2a6a6; }
-      body.dark .tip.warn a { color: #ff9d9d; }
+      .tip.warn {
+        background: #fdecec;
+        color: #c0392b;
+      }
+      .tip.warn a {
+        color: #c0392b;
+        font-weight: 700;
+      }
+      body.dark .tip {
+        background: #2a2617;
+        color: #e0cf92;
+      }
+      body.dark .tip.warn {
+        background: #3a2020;
+        color: #f2a6a6;
+      }
+      body.dark .tip.warn a {
+        color: #ff9d9d;
+      }
     </style>
   </head>
   <body>
@@ -690,11 +708,11 @@
       </div>
     </div>
     <nav class="nav">
-      <button id="nb-home" onclick="go('home')"><span>🏠</span>홈</button>
-      <button id="nb-work" onclick="go('work')"><span>💪</span>운동</button>
-      <button id="nb-meal" onclick="go('meal')"><span>🍚</span>식단</button>
-      <button id="nb-rep" onclick="go('rep')"><span>📊</span>리포트</button>
-      <button id="nb-set" onclick="go('set')"><span>⚙️</span>설정</button>
+      <button id="nb-home" onclick="go('home')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></span>홈</button>
+      <button id="nb-work" onclick="go('work')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg></span>운동</button>
+      <button id="nb-meal" onclick="go('meal')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2.5 2.5 0 005 0V3M7.5 10v11"/><path d="M17 3c-1.7 0-2.8 2.2-2.8 5S15.3 13 17 13v8"/></svg></span>식단</button>
+      <button id="nb-rep" onclick="go('rep')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M10 20V4M16 20v-6M3 20h18"/></svg></span>리포트</button>
+      <button id="nb-set" onclick="go('set')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="7" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="12" cy="17" r="2"/><path d="M4 7h10M18 7h2M4 12h2M10 12h10M4 17h6M14 17h6"/></svg></span>설정</button>
     </nav>
     <script>
       // ===== 데이터 =====
@@ -1683,16 +1701,16 @@
         let body;
         if (f) {
           body =
-            '<p style="margin:10px 0 4px"><b>🎯 시작 자세</b><br>' +
+            '<p style="margin:10px 0 4px"><b>시작 자세</b><br>' +
             esc(f[0]) +
             '</p>' +
-            '<p style="margin:10px 0 4px"><b>🔄 동작</b><br>' +
+            '<p style="margin:10px 0 4px"><b>동작</b><br>' +
             esc(f[1]) +
             '</p>' +
-            '<p style="margin:10px 0 4px"><b>💨 호흡</b><br>' +
+            '<p style="margin:10px 0 4px"><b>호흡</b><br>' +
             esc(f[2]) +
             '</p>' +
-            '<p style="margin:10px 0 4px;color:#e5484d"><b>⚠️ 주의</b><br>' +
+            '<p style="margin:10px 0 4px;color:#e5484d"><b>주의</b><br>' +
             esc(f[3]) +
             '</p>';
         } else {
@@ -2019,7 +2037,7 @@
           }),
         });
         save();
-        alert('루틴 저장 완료! 홈에서 언제든 불러올 수 있어요 ⭐');
+        alert('루틴을 저장했어요. 홈에서 언제든 불러올 수 있어요.');
       }
       function startRoutine(i) {
         var r = st.routines[i];
@@ -2101,21 +2119,21 @@
           '<div class="top">오늘의 운동 <small>' +
           td() +
           ' · ' +
-          (stk > 0 ? '🔥 ' + stk + '일 연속 · ' : '') +
+          (stk > 0 ? stk + '일 연속 · ' : '') +
           '이번 주 ' +
           week +
           '/' +
           tgt +
           '회</small></div><div class="wrap">' +
           (needBackup
-            ? '<div class="tip warn">💾 백업한 지 ' +
+            ? '<div class="tip warn">백업한 지 ' +
               (st.lastBackup
                 ? daysAgo(st.lastBackup) + '일 지났어요'
                 : '오래됐어요') +
               '. <a href="#" onclick="backup();return false">지금 백업하기</a> (기록 보호)</div>'
             : '') +
           (st.cur
-            ? '<div class="card"><h3>🔥 운동 진행 중</h3><p class="muted">' +
+            ? '<div class="card"><h3>운동 진행 중</h3><p class="muted">' +
               esc(st.cur.day) +
               ' — 이어서 기록하세요</p><br><button class="btn" onclick="go(\'work\')">이어가기</button></div>'
             : '') +
@@ -2145,7 +2163,7 @@
             .join('') +
           '</div><br><button class="btn" onclick="startRec()">이 루틴으로 운동 시작</button></div>' +
           (st.routines.length
-            ? '<div class="card"><h3>⭐ 내 루틴</h3>' +
+            ? '<div class="card"><h3>내 루틴</h3>' +
               st.routines
                 .map(function (r, i) {
                   return (
@@ -2164,7 +2182,7 @@
               '</div>'
             : '') +
           (kcalComment()
-            ? '<div class="tip">🍚 ' + esc(kcalComment()) + '</div>'
+            ? '<div class="tip">' + esc(kcalComment()) + '</div>'
             : '') +
           (t
             ? '<div class="card"><h3>오늘 칼로리</h3><div class="row"><span class="big">' +
@@ -2251,7 +2269,7 @@
                 esc(e.n) +
                 '</span><button class="formbtn" onclick="openForm(\'' +
                 e.n.replace(/'/g, "\\'") +
-                '\')">📖 자세</button></span><button class="del" onclick="delEx(' +
+                '\')">자세</button></span><button class="del" onclick="delEx(' +
                 ei +
                 ')">✕</button></div>' +
                 (last
@@ -2264,7 +2282,7 @@
                     '</span>'
                   : '') +
                 (pr.kg
-                  ? '<span class="prbadge">🏆 최고 ' + pr.kg + 'kg</span>'
+                  ? '<span class="prbadge">최고 ' + pr.kg + 'kg</span>'
                   : '') +
                 e.sets
                   .map(function (s, si) {
@@ -2346,7 +2364,7 @@
           '<div class="card"><h3>메모</h3><textarea rows="2" placeholder="컨디션, 특이사항..." onchange="st.cur.memo=this.value;save()">' +
           esc(c.memo) +
           '</textarea></div>' +
-          '<button class="btn" onclick="finish()">운동 완료 💪</button><br><br><button class="btn gray" onclick="saveRoutine()">⭐ 이 구성 루틴으로 저장</button><br><br><button class="btn red" onclick="if(confirm(\'기록을 버리고 취소할까요?\')){st.cur=null;save();render()}">운동 취소</button><br><br></div>'
+          '<button class="btn" onclick="finish()">운동 완료</button><br><br><button class="btn gray" onclick="saveRoutine()">⭐ 이 구성 루틴으로 저장</button><br><br><button class="btn red" onclick="if(confirm(\'기록을 버리고 취소할까요?\')){st.cur=null;save();render()}">운동 취소</button><br><br></div>'
         );
       }
 
@@ -2445,9 +2463,9 @@
           '<div class="celeh">운동 완료!</div><div class="celev">' +
           Math.round(volume(c)).toLocaleString() +
           ' kg</div><div class="celes">오늘의 총 볼륨</div>';
-        if (stk > 1) html += '<div class="celetag">🔥 ' + stk + '일 연속</div>';
+        if (stk > 1) html += '<div class="celetag">' + stk + '일 연속</div>';
         if (prs.length)
-          html += '<div class="celetag">🏆 ' + esc(prs.join(', ')) + '</div>';
+          html += '<div class="celetag">' + esc(prs.join(', ')) + '</div>';
         celebrate(html);
       }
       function histHtml() {
@@ -2618,7 +2636,7 @@
           Math.round(vol).toLocaleString() +
           '</span><p class="muted">총 볼륨 (kg)</p></div></div></div>' +
           (prs.length
-            ? '<div class="card"><h3>🏆 개인기록 (PR)</h3>' +
+            ? '<div class="card"><h3>개인기록 (PR)</h3>' +
               prs
                 .map(function (x) {
                   return (
@@ -2780,7 +2798,7 @@
             .join('') +
           '</div></div>' +
           '<div class="card"><h3>데이터</h3><button class="btn gray" onclick="backup()">백업 파일 다운로드</button><label class="f">백업 파일 복원</label><input type="file" accept=".json" onchange="restore(this)"></div>' +
-          '<div class="card muted">📱 폰 홈 화면에 추가: 브라우저 메뉴 → "홈 화면에 추가"를 누르면 앱처럼 설치돼요.</div></div>'
+          '<div class="card muted">폰 홈 화면에 추가: 브라우저 메뉴 → "홈 화면에 추가"를 누르면 앱처럼 설치돼요.</div></div>'
         );
       }
       function tgEq(q) {
