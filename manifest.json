@@ -1,0 +1,16 @@
+{
+  "name": "마이핏 - 나만의 헬스",
+  "short_name": "마이핏",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f4f6",
+  "theme_color": "#3182f6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
