@@ -623,6 +623,11 @@
           stroke-dashoffset: 0;
         }
       }
+      .tip.warn { background: #fdecec; color: #c0392b; }
+      .tip.warn a { color: #c0392b; font-weight: 700; }
+      body.dark .tip { background: #2a2617; color: #e0cf92; }
+      body.dark .tip.warn { background: #3a2020; color: #f2a6a6; }
+      body.dark .tip.warn a { color: #ff9d9d; }
     </style>
   </head>
   <body>
@@ -2103,11 +2108,11 @@
           tgt +
           '회</small></div><div class="wrap">' +
           (needBackup
-            ? '<div class="tip" style="background:#fdecec;color:#c0392b">💾 백업한 지 ' +
+            ? '<div class="tip warn">💾 백업한 지 ' +
               (st.lastBackup
                 ? daysAgo(st.lastBackup) + '일 지났어요'
                 : '오래됐어요') +
-              '. <a href="#" onclick="backup();return false" style="color:#c0392b;font-weight:700">지금 백업하기</a> (기록 보호)</div>'
+              '. <a href="#" onclick="backup();return false">지금 백업하기</a> (기록 보호)</div>'
             : '') +
           (st.cur
             ? '<div class="card"><h3>🔥 운동 진행 중</h3><p class="muted">' +
