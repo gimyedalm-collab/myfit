@@ -646,6 +646,10 @@
       body.dark .tip.warn a {
         color: #ff9d9d;
       }
+      .mrow { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 13px; }
+      .mlab { width: 46px; flex: none; color: #4e5968; }
+      .mrow .bar { flex: 1; margin: 0; }
+      .mval { width: 82px; flex: none; text-align: right; color: #8b95a1; font-size: 12px; }
     </style>
   </head>
   <body>
@@ -708,11 +712,90 @@
       </div>
     </div>
     <nav class="nav">
-      <button id="nb-home" onclick="go('home')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></span>홈</button>
-      <button id="nb-work" onclick="go('work')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg></span>운동</button>
-      <button id="nb-meal" onclick="go('meal')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2.5 2.5 0 005 0V3M7.5 10v11"/><path d="M17 3c-1.7 0-2.8 2.2-2.8 5S15.3 13 17 13v8"/></svg></span>식단</button>
-      <button id="nb-rep" onclick="go('rep')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M10 20V4M16 20v-6M3 20h18"/></svg></span>리포트</button>
-      <button id="nb-set" onclick="go('set')"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="7" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="12" cy="17" r="2"/><path d="M4 7h10M18 7h2M4 12h2M10 12h10M4 17h6M14 17h6"/></svg></span>설정</button>
+      <button id="nb-home" onclick="go('home')">
+        <span
+          ><svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 11l9-8 9 8" />
+            <path d="M5 10v10h5v-6h4v6h5V10" /></svg></span
+        >홈
+      </button>
+      <button id="nb-work" onclick="go('work')">
+        <span
+          ><svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"
+            /></svg></span
+        >운동
+      </button>
+      <button id="nb-meal" onclick="go('meal')">
+        <span
+          ><svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 3v7a2.5 2.5 0 005 0V3M7.5 10v11" />
+            <path d="M17 3c-1.7 0-2.8 2.2-2.8 5S15.3 13 17 13v8" /></svg></span
+        >식단
+      </button>
+      <button id="nb-rep" onclick="go('rep')">
+        <span
+          ><svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 20V11M10 20V4M16 20v-6M3 20h18" /></svg></span
+        >리포트
+      </button>
+      <button id="nb-set" onclick="go('set')">
+        <span
+          ><svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="16" cy="7" r="2" />
+            <circle cx="8" cy="12" r="2" />
+            <circle cx="12" cy="17" r="2" />
+            <path
+              d="M4 7h10M18 7h2M4 12h2M10 12h10M4 17h6M14 17h6"
+            /></svg></span
+        >설정
+      </button>
     </nav>
     <script>
       // ===== 데이터 =====
@@ -1735,23 +1818,19 @@
       function closeForm() {
         $('modal').classList.remove('show');
       }
+      // [이름, kcal, 단백질g, 탄수g, 지방g]
       const FOODS = [
-        ['백미밥 1공기', 300],
-        ['현미밥 1공기', 280],
-        ['닭가슴살 100g', 110],
-        ['계란 1개', 75],
-        ['고구마 1개', 130],
-        ['김밥 1줄', 480],
-        ['라면 1개', 500],
-        ['샐러드', 150],
-        ['프로틴 쉐이크', 120],
-        ['우유 200ml', 125],
-        ['바나나 1개', 90],
-        ['사과 1개', 95],
-        ['삼겹살 200g', 660],
-        ['치킨 2조각', 400],
-        ['샌드위치', 350],
-        ['제로콜라·아메리카노', 10],
+        ['백미밥 1공기', 300, 6, 66, 1],['현미밥 1공기', 280, 6, 58, 2],['오트밀 40g', 150, 5, 27, 3],
+        ['닭가슴살 100g', 110, 23, 0, 2],['닭가슴살 200g', 220, 46, 0, 4],['닭다리살 100g', 190, 19, 0, 12],
+        ['계란 1개', 75, 6, 1, 5],['계란흰자 2개', 34, 7, 0, 0],['참치캔 1개', 100, 22, 0, 1],
+        ['소고기 살코기 100g', 180, 26, 0, 8],['삼겹살 200g', 660, 34, 0, 58],['연어 100g', 208, 20, 0, 13],
+        ['두부 반모 150g', 120, 13, 3, 7],['그릭요거트 100g', 60, 10, 4, 0],['우유 200ml', 125, 7, 10, 7],
+        ['프로틴 쉐이크 1스쿱', 120, 24, 3, 2],['고구마 1개', 130, 2, 30, 0],['바나나 1개', 90, 1, 23, 0],
+        ['사과 1개', 95, 0, 25, 0],['견과류 30g', 180, 6, 6, 15],['샐러드(드레싱)', 150, 3, 12, 9],
+        ['김밥 1줄', 480, 12, 80, 10],['비빔밥', 560, 18, 90, 12],['김치찌개 1인분', 250, 15, 12, 14],
+        ['된장찌개 1인분', 200, 12, 15, 9],['라면 1개', 500, 10, 79, 16],['샌드위치', 350, 15, 40, 13],
+        ['치킨 2조각', 400, 30, 15, 24],['피자 2조각', 560, 24, 60, 24],['닭+현미+야채 도시락', 450, 35, 45, 10],
+        ['고구마+계란 도시락', 250, 10, 32, 6],['아메리카노', 10, 0, 2, 0],['제로콜라', 1, 0, 0, 0],
       ];
 
       // ===== 추천 로직 =====
@@ -2492,61 +2571,82 @@
       }
 
       // ===== 식단 =====
+      function macroTargets() {
+        var w = +st.profile.w, kcal = kcalTarget();
+        if (!w || !kcal) return null;
+        var g = st.profile.goal;
+        var pk = g === 'diet' ? 2.0 : g === 'bulk' ? 1.9 : 1.6;
+        var protein = Math.round(w * pk);
+        var fat = Math.round((kcal * 0.25) / 9);
+        var carb = Math.round((kcal - protein * 4 - fat * 9) / 4);
+        if (carb < 0) carb = 0;
+        return { kcal: kcal, protein: protein, carb: carb, fat: fat };
+      }
+      function todayMacros() {
+        var list = st.meals[td()] || [], r = { k: 0, p: 0, c: 0, f: 0 };
+        list.forEach(function (m) { r.k += +m.k || 0; r.p += +m.p || 0; r.c += +m.c || 0; r.f += +m.f || 0; });
+        return r;
+      }
+      function mealRecommend() {
+        var t = macroTargets(); if (!t) return null;
+        var m = todayMacros();
+        var remK = t.kcal - m.k, remP = Math.round(t.protein - m.p);
+        var msg;
+        if (remK <= 0 && remP <= 0) msg = '오늘 목표를 다 채웠어요. 여기서 마무리해도 좋아요.';
+        else if (remK <= 150 && remP > 12) msg = '칼로리는 거의 찼는데 단백질이 ' + remP + 'g 모자라요. 저칼로리 고단백으로 채우세요.';
+        else if (remP > 25) msg = '단백질이 ' + remP + 'g 부족해요. 아래에서 단백질 위주로 채우면 좋아요.';
+        else if (remK > 400) msg = '아직 ' + Math.max(0, Math.round(remK)) + 'kcal 남았어요. 아래에서 골라 드세요.';
+        else msg = '거의 다 왔어요. 가볍게 마무리하세요.';
+        var pool;
+        if (remP > 12) pool = FOODS.slice().sort(function (a, b) { return b[2] / (b[1] || 1) - a[2] / (a[1] || 1); });
+        else { var tg = Math.max(120, remK / 2); pool = FOODS.slice().sort(function (a, b) { return Math.abs(a[1] - tg) - Math.abs(b[1] - tg); }); }
+        return { msg: msg, items: pool.slice(0, 3) };
+      }
+      function mbar(label, val, tgt, color) {
+        var pct = tgt ? Math.min(100, (val / tgt) * 100) : 0;
+        return '<div class="mrow"><span class="mlab">' + label + '</span><div class="bar"><i style="width:' + pct + '%;background:' + color + '"></i></div><span class="mval">' + Math.round(val) + '/' + tgt + 'g</span></div>';
+      }
       function meal() {
-        const list = st.meals[td()] || [],
-          t = kcalTarget(),
-          k = todayKcal();
+        var list = st.meals[td()] || [], t = macroTargets(), m = todayMacros(), kt = kcalTarget();
+        var rec = t ? mealRecommend() : null;
         return (
-          '<div class="top">오늘 식단 <small>' +
-          td() +
-          (t ? ' · ' + k + ' / ' + t + ' kcal' : '') +
-          '</small></div><div class="wrap">' +
+          '<div class="top">오늘 식단 <small>' + td() + (kt ? ' · ' + m.k + ' / ' + kt + ' kcal' : '') + '</small></div><div class="wrap">' +
           (t
-            ? '<div class="card"><div class="bar"><i style="width:' +
-              Math.min(100, (k / t) * 100) +
-              '%;background:' +
-              (k > t * 1.15 ? '#e5484d' : '#3182f6') +
-              '"></i></div></div>'
+            ? '<div class="card"><h3>오늘 목표</h3>' +
+              '<div class="mrow"><span class="mlab">칼로리</span><div class="bar"><i style="width:' + Math.min(100, (m.k / t.kcal) * 100) + '%;background:' + (m.k > t.kcal * 1.15 ? '#e5484d' : '#3182f6') + '"></i></div><span class="mval">' + m.k + '/' + t.kcal + '</span></div>' +
+              mbar('단백질', m.p, t.protein, '#12b886') +
+              mbar('탄수', m.c, t.carb, '#4dabf7') +
+              mbar('지방', m.f, t.fat, '#f59f00') +
+              '</div>'
+            : '<div class="card muted">설정에서 몸무게·목표를 넣으면 칼로리·단백질 목표를 계산해줘요.</div>') +
+          (rec
+            ? '<div class="card"><h3>오늘 뭐 먹지?</h3><p class="muted" style="margin-bottom:6px">' + esc(rec.msg) + '</p>' +
+              rec.items.map(function (f) { var i = FOODS.indexOf(f); return '<div class="meal-item"><span>' + esc(f[0]) + ' <span class="muted">' + f[1] + 'kcal · 단백 ' + f[2] + 'g</span></span><button class="btn small" style="flex:none" onclick="addMealF(' + i + ')">추가</button></div>'; }).join('') +
+              '</div>'
             : '') +
           '<div class="card"><h3>빠른 추가</h3>' +
-          FOODS.map(
-            (f) =>
-              '<span class="chip" onclick="addMeal(\'' +
-              f[0] +
-              "'," +
-              f[1] +
-              ')">' +
-              f[0] +
-              ' ' +
-              f[1] +
-              '</span>',
-          ).join('') +
+          FOODS.map(function (f, i) { return '<span class="chip" onclick="addMealF(' + i + ')">' + esc(f[0]) + ' <span style="opacity:.55">' + f[1] + '</span></span>'; }).join('') +
           '</div>' +
-          '<div class="card"><h3>직접 입력</h3><div class="row"><input id="mn" placeholder="음식 이름"><input id="mk" inputmode="numeric" placeholder="kcal" style="max-width:90px;flex:none"></div><br><button class="btn gray" onclick="addMeal($(\'mn\').value,$(\'mk\').value)">추가</button></div>' +
+          '<div class="card"><h3>직접 입력</h3><div class="row"><input id="mn" placeholder="음식 이름"><input id="mk" inputmode="numeric" placeholder="kcal" style="max-width:78px;flex:none"><input id="mp" inputmode="numeric" placeholder="단백g" style="max-width:70px;flex:none"></div><br><button class="btn gray" onclick="addMeal($(\'mn\').value,$(\'mk\').value,$(\'mp\').value)">추가</button></div>' +
           '<div class="card"><h3>오늘 먹은 것</h3>' +
           (list.length
-            ? list
-                .map(
-                  (m, i) =>
-                    '<div class="meal-item"><span>' +
-                    esc(m.n) +
-                    '</span><span>' +
-                    m.k +
-                    ' kcal <button class="del" onclick="delMeal(' +
-                    i +
-                    ')">✕</button></span></div>',
-                )
-                .join('')
-            : '<p class="muted">아직 없음</p>') +
+            ? list.map(function (m2, i) { return '<div class="meal-item"><span>' + esc(m2.n) + (m2.p ? ' <span class="muted">단백 ' + m2.p + 'g</span>' : '') + '</span><span>' + m2.k + ' kcal <button class="del" onclick="delMeal(' + i + ')">✕</button></span></div>'; }).join('')
+            : '<p class="muted">아직 기록이 없어요. 위에서 추가하세요.</p>') +
           '</div></div>'
         );
       }
-      function addMeal(n, k) {
+      function addMealF(i) {
+        var f = FOODS[i];
+        (st.meals[td()] = st.meals[td()] || []).push({ n: f[0], k: f[1], p: f[2], c: f[3], f: f[4] });
+        save();
+        render();
+      }
+      function addMeal(n, k, pr) {
         if (!n || !+k) {
-          alert('이름과 칼로리를 넣어주세요');
+          alert('음식 이름과 칼로리를 넣어주세요');
           return;
         }
-        (st.meals[td()] = st.meals[td()] || []).push({ n: n, k: +k });
+        (st.meals[td()] = st.meals[td()] || []).push({ n: n, k: +k, p: +pr || 0, c: 0, f: 0 });
         save();
         render();
       }
