@@ -1945,7 +1945,8 @@
           body +
           '<a class="btn" style="text-decoration:none;text-align:center;margin-top:14px" href="' +
           yt +
-          '" target="_blank" rel="noopener">▶ 유튜브에서 영상 보기</a>';
+          '" target="_blank" rel="noopener">▶ 유튜브에서 영상 보기</a>' +
+          '<p class="muted" style="margin-top:10px;font-size:12px">참고용 가이드예요. 통증이 있으면 멈추고, 무리하지 마세요.</p>';
         $('modal').classList.add('show');
       }
       function closeForm() {
@@ -2328,6 +2329,36 @@
         applyTheme();
         render();
       }
+      function rexLine() {
+        var tone = st.coachTone || 'spartan';
+        var hc = tone === 'hardcore';
+        var last = st.logs.length ? st.logs[st.logs.length - 1] : null;
+        var since = last ? daysAgo(last.date) : null;
+        var stk = streak();
+        if (!last)
+          return hc
+            ? '기록 하나 없네. 오늘부터 시작해, 핑계 금지.'
+            : '첫 운동부터 기록해봐. 시작이 반이야.';
+        if (since === 0)
+          return hc
+            ? '오늘 한 거 인정. 근데 여기서 멈추지 마.'
+            : stk > 1
+              ? stk + '일 연속. 오늘도 해냈어, 잘했어.'
+              : '오늘 벌써 했네. 좋아.';
+        if (since === 1)
+          return hc
+            ? '어제 했으면 오늘도 각 잡아. 연속이 힘이야.'
+            : '어제 했으니 오늘도 이어가면 좋지.';
+        if (since >= 3)
+          return hc
+            ? since + '일이나 쨌어. 핑계 그만하고 오늘 간다.'
+            : tone === 'normal'
+              ? since + '일 됐어요. 오늘 가볍게라도 움직여봐요.'
+              : since + '일 쉬었어. 오늘 다시 시작하자.';
+        return hc
+          ? '이틀 쉬었어. 오늘은 무조건 간다.'
+          : '이틀 쉬었네. 오늘 가볍게 다시 시작하자.';
+      }
       function home() {
         var g = GOALS[st.profile.goal];
         if (pick == null) pick = nextDayIdx();
@@ -2364,6 +2395,15 @@
           '/' +
           tgt +
           '회</small></div><div class="wrap">' +
+          (!st.profile.w
+            ? '<div class="card"><h3>시작하기</h3><p class="muted">설정에서 몸무게·목표·헬스장 기구를 넣으면 딱 맞는 추천을 받아요. AI 코치(REX)는 무료 키만 넣으면 됩니다.</p><br><button class="btn" onclick="go(\'set\')">설정으로 가기</button></div>'
+            : '') +
+          (st.profile.w
+            ? '<div class="card" style="border-color:#21f1a8"><p style="font-weight:700;font-size:15px">' +
+              esc((st.coachName || 'REX') + ': ') +
+              esc(rexLine()) +
+              '</p></div>'
+            : '') +
           (needBackup
             ? '<div class="tip warn">백업한 지 ' +
               (st.lastBackup

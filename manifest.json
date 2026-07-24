@@ -3,8 +3,8 @@
   "short_name": "마이핏",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f2f4f6",
-  "theme_color": "#3182f6",
+  "background_color": "#171717",
+  "theme_color": "#171717",
   "icons": [
     {
       "src": "icon.svg",
