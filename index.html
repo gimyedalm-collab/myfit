@@ -767,6 +767,11 @@
       ><button onclick="addTime()">+30초</button
       ><button onclick="stopTimer()">건너뛰기</button>
     </div>
+    <div class="timer" id="itvbar">
+      <span id="itvphase">준비</span><b id="itvval">0:00</b
+      ><span id="itvround" style="font-size: 13px; color: #9aa0a8"></span
+      ><button onclick="stopInterval()">정지</button>
+    </div>
     <div
       class="modal"
       id="modal"
@@ -2541,6 +2546,7 @@
           '<button class="btn gray small" style="margin:2px 0 8px" onclick="startTimer(GOALS[st.profile.goal].rest)">휴식 타이머 시작 (' +
           GOALS[st.profile.goal].rest +
           '초)</button>' +
+          '<div class="card"><h3>인터벌 타이머 <span class="muted" style="font-weight:400;font-size:12px">유산소·서킷용</span></h3><div class="row"><input id="itvw" inputmode="numeric" placeholder="운동 초" value="30"><input id="itvr" inputmode="numeric" placeholder="휴식 초" value="15"><input id="itvc" inputmode="numeric" placeholder="라운드" value="8"></div><br><button class="btn gray" onclick="startIntervalFromInputs()">인터벌 시작</button></div>' +
           c.ex
             .map(function (e, ei) {
               var last = lastFor(e.n);
@@ -2973,6 +2979,55 @@
       function daysAgo(ds) {
         return Math.floor((new Date(td()) - new Date(ds)) / 864e5);
       }
+      function bodyTrend() {
+        var bs = st.body.filter(function (x) {
+          return x.muscle || x.f;
+        });
+        if (bs.length < 2) return '';
+        var a = bs[0],
+          z = bs[bs.length - 1],
+          parts = [];
+        function d(x) {
+          return (x >= 0 ? '+' : '') + Math.round(x * 10) / 10;
+        }
+        if (a.muscle && z.muscle)
+          parts.push(
+            '골격근 ' +
+              a.muscle +
+              '→' +
+              z.muscle +
+              'kg (' +
+              d(z.muscle - a.muscle) +
+              ')',
+          );
+        if (a.f && z.f)
+          parts.push('체지방 ' + a.f + '→' + z.f + '% (' + d(z.f - a.f) + ')');
+        return parts.length
+          ? '<p class="muted" style="margin-top:8px">추세: ' +
+              parts.join(' · ') +
+              '</p>'
+          : '';
+      }
+      function weeklyPlanText() {
+        var s = st.profile.split,
+          names = SPLITS[s].names.join(' → ');
+        var freq =
+          s === 1
+            ? '주 2~3회, 하루 이상 간격'
+            : s === 2
+              ? '주 4회 (예: 월화 · 목금)'
+              : s === 3
+                ? '주 3~6회 (3회=한 바퀴, 6회=부위당 2회)'
+                : '주 4~5회';
+        return (
+          s +
+          '분할: ' +
+          names +
+          '<br>권장 빈도: ' +
+          freq +
+          '<br>주 5회 이상 갈 수 있으면 3분할 두 바퀴가 근성장에 제일 좋아요.'
+        );
+      }
       function rep() {
         var wk = st.logs.filter(function (l) {
           return daysAgo(l.date) < 7;
@@ -3117,7 +3172,11 @@
               );
             })
             .join('') +
+          bodyTrend() +
           '</div>' +
+          '<div class="card"><h3>주간 배치 추천</h3><p class="muted">' +
+          weeklyPlanText() +
+          '</p></div>' +
           histHtml() +
           '</div>'
         );
@@ -3383,6 +3442,74 @@
       function stopTimer() {
         clearInterval(tInt);
         $('timerbar').classList.remove('show');
+      }
+      var itv = null;
+      function fmtSec(s) {
+        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+      }
+      function startInterval(work, rest, rounds) {
+        work = Math.max(5, work | 0);
+        rest = Math.max(0, rest | 0);
+        rounds = Math.max(1, rounds | 0);
+        stopTimer();
+        if (itv) clearInterval(itv.t);
+        itv = {
+          work: work,
+          rest: rest,
+          rounds: rounds,
+          round: 1,
+          phase: 'work',
+          left: work,
+        };
+        $('itvbar').classList.add('show');
+        paintInterval();
+        itv.t = setInterval(function () {
+          itv.left--;
+          if (itv.left <= 0) {
+            if (navigator.vibrate) navigator.vibrate(150);
+            if (itv.phase === 'work') {
+              if (itv.rest > 0) {
+                itv.phase = 'rest';
+                itv.left = itv.rest;
+              } else {
+                nextRound();
+              }
+            } else {
+              nextRound();
+            }
+          }
+          paintInterval();
+        }, 1000);
+      }
+      function nextRound() {
+        if (itv.round >= itv.rounds) {
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+          stopInterval();
+          return;
+        }
+        itv.round++;
+        itv.phase = 'work';
+        itv.left = itv.work;
+      }
+      function paintInterval() {
+        if (!itv) return;
+        $('itvphase').textContent = itv.phase === 'work' ? '운동' : '휴식';
+        $('itvphase').style.color =
+          itv.phase === 'work' ? '#21f1a8' : '#9aa0a8';
+        $('itvval').textContent = fmtSec(Math.max(0, itv.left));
+        $('itvround').textContent = itv.round + '/' + itv.rounds;
+      }
+      function stopInterval() {
+        if (itv) clearInterval(itv.t);
+        itv = null;
+        $('itvbar').classList.remove('show');
+      }
+      function startIntervalFromInputs() {
+        startInterval(
+          +$('itvw').value || 30,
+          +$('itvr').value || 15,
+          +$('itvc').value || 8,
+        );
       }
       var _celt = null;
       function celebrate(html) {
