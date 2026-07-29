@@ -2137,6 +2137,20 @@
         itvOpen = !itvOpen;
         render();
       }
+      let foodsOpen = false;
+      function toggleFoods() {
+        foodsOpen = !foodsOpen;
+        render();
+      }
+      function foodCount(name) {
+        var n = 0;
+        Object.keys(st.meals).forEach(function (d) {
+          st.meals[d].forEach(function (m) {
+            if (m.n === name) n++;
+          });
+        });
+        return n;
+      }
       const $ = (id) => document.getElementById(id);
       function go(t) {
         tab = t;
@@ -2893,6 +2907,12 @@
           m = todayMacros(),
           kt = kcalTarget();
         var rec = t ? mealRecommend() : null;
+        var foodOrder = FOODS.map(function (f, i) {
+          return i;
+        }).sort(function (a, b) {
+          return foodCount(FOODS[b][0]) - foodCount(FOODS[a][0]);
+        });
+        var foodShow = foodsOpen ? foodOrder : foodOrder.slice(0, 10);
         return (
           '<div class="top">오늘 식단 <small>' +
           td() +
@@ -2937,17 +2957,25 @@
               '</div>'
             : '') +
           '<div class="card"><h3>빠른 추가</h3>' +
-          FOODS.map(function (f, i) {
-            return (
-              '<span class="chip" onclick="addMealF(' +
-              i +
-              ')">' +
-              esc(f[0]) +
-              ' <span style="opacity:.55">' +
-              f[1] +
-              '</span></span>'
-            );
-          }).join('') +
+          foodShow
+            .map(function (i) {
+              var f = FOODS[i];
+              return (
+                '<span class="chip" onclick="addMealF(' +
+                i +
+                ')">' +
+                esc(f[0]) +
+                ' <span style="opacity:.55">' +
+                f[1] +
+                '</span></span>'
+              );
+            })
+            .join('') +
+          (foodOrder.length > 10
+            ? '<span class="chip" onclick="toggleFoods()">' +
+              (foodsOpen ? '접기' : '더보기') +
+              '</span>'
+            : '') +
           '</div>' +
           '<div class="card"><h3>직접 입력</h3><div class="row"><input id="mn" placeholder="음식 이름"><input id="mk" inputmode="numeric" placeholder="kcal" style="max-width:78px;flex:none"><input id="mp" inputmode="numeric" placeholder="단백g" style="max-width:70px;flex:none"></div><br><button class="btn gray" onclick="addMeal($(\'mn\').value,$(\'mk\').value,$(\'mp\').value)">추가</button></div>' +
           '<div class="card"><h3>오늘 먹은 것</h3>' +
