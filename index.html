@@ -2132,6 +2132,11 @@
         pick = null;
       let pkPart = '전체',
         pkQ = '';
+      let itvOpen = false;
+      function toggleItv() {
+        itvOpen = !itvOpen;
+        render();
+      }
       const $ = (id) => document.getElementById(id);
       function go(t) {
         tab = t;
@@ -2551,7 +2556,13 @@
           '<button class="btn gray small" style="margin:2px 0 8px" onclick="startTimer(GOALS[st.profile.goal].rest)">휴식 타이머 시작 (' +
           GOALS[st.profile.goal].rest +
           '초)</button>' +
-          '<div class="card"><h3>인터벌 타이머 <span class="muted" style="font-weight:400;font-size:12px">유산소·서킷용</span></h3><div class="row"><input id="itvw" inputmode="numeric" placeholder="운동 초" value="30"><input id="itvr" inputmode="numeric" placeholder="휴식 초" value="15"><input id="itvc" inputmode="numeric" placeholder="라운드" value="8"></div><br><button class="btn gray" onclick="startIntervalFromInputs()">인터벌 시작</button></div>' +
+          '<div class="card"><h3 style="cursor:pointer" onclick="toggleItv()">' +
+          (itvOpen ? '▾' : '▸') +
+          ' 인터벌 타이머 <span class="muted" style="font-weight:400;font-size:12px">유산소·서킷용</span></h3>' +
+          (itvOpen
+            ? '<div class="row"><input id="itvw" inputmode="numeric" placeholder="운동 초" value="30"><input id="itvr" inputmode="numeric" placeholder="휴식 초" value="15"><input id="itvc" inputmode="numeric" placeholder="라운드" value="8"></div><br><button class="btn gray" onclick="startIntervalFromInputs()">인터벌 시작</button>'
+            : '') +
+          '</div>' +
           c.ex
             .map(function (e, ei) {
               var last = lastFor(e.n);
