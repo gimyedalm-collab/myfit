@@ -2834,6 +2834,10 @@
           /[&<>"]/g,
           (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
         );
+      const normSearch = (s) =>
+        String(s)
+          .replace(/[\s·()]/g, '')
+          .toLowerCase();
 
       function est1rm(kg, reps) {
         kg = +kg || 0;
@@ -2903,7 +2907,7 @@
         if (!pkQ.trim() && pkPart === '전체')
           return '<p class="muted">검색어를 입력하거나 부위를 선택하세요</p>';
         var c = st.cur;
-        var q = pkQ.replace(/\s+/g, '').toLowerCase();
+        var q = normSearch(pkQ);
         var out = avail()
           .filter(function (e) {
             return !c.ex.find(function (x) {
@@ -2914,7 +2918,7 @@
             return pkPart === '전체' || e[1] === pkPart;
           })
           .filter(function (e) {
-            return !q || e[0].replace(/\s+/g, '').toLowerCase().indexOf(q) >= 0;
+            return !q || normSearch(e[0]).indexOf(q) >= 0;
           })
           .map(function (e) {
             return (
