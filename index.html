@@ -339,6 +339,50 @@
           border-radius: 20px;
         }
       }
+      .motion-static {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin: 6px 0 10px;
+      }
+      .motion-static > div {
+        text-align: center;
+      }
+      .motion-cap {
+        display: block;
+        font-size: 11px;
+        color: #8b95a1;
+        margin-bottom: 2px;
+      }
+      .motion-static svg,
+      .motion-anim svg {
+        width: 100px;
+        height: 100px;
+      }
+      .motion-anim {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        margin: 6px auto 10px;
+      }
+      .motion-anim svg {
+        position: absolute;
+        inset: 0;
+      }
+      .motion-anim .pose2 {
+        position: absolute;
+        inset: 0;
+        animation: moFade 1.8s ease-in-out infinite;
+      }
+      @keyframes moFade {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
       .del {
         color: #e5484d;
         background: none;
@@ -783,7 +827,7 @@
       id="modal"
       onclick="if (event.target === this) closeForm();"
     >
-      <div class="sheet">
+      <div class="modalcard">
         <div id="modalbody"></div>
         <button class="btn gray" style="margin-top: 14px" onclick="closeForm()">
           닫기
@@ -816,18 +860,6 @@
           />
         </svg>
         <div id="celemsg"></div>
-      </div>
-    </div>
-    <div
-      id="modal"
-      class="modal"
-      onclick="if (event.target === this) closeForm();"
-    >
-      <div class="modalcard">
-        <div id="modalbody"></div>
-        <button class="btn gray" style="margin-top: 12px" onclick="closeForm()">
-          닫기
-        </button>
       </div>
     </div>
     <nav class="nav">
@@ -1920,6 +1952,187 @@
         const x = EX.find((z) => z[0] === name);
         return x ? x[1] : '';
       }
+      // 동작 패턴 분류 (모션 가이드용, 119종 전체). 5종(press·squat·pulldown·curl·lateral)만
+      // 우선 애니메이션 제공, 나머지 패턴은 추후 순차 제작
+      const MOTION_PATTERN = {
+        벤치프레스: 'press',
+        '인클라인 벤치프레스': 'press',
+        '디클라인 벤치프레스': 'press',
+        '덤벨 벤치프레스': 'press',
+        '인클라인 덤벨프레스': 'press',
+        '디클라인 덤벨프레스': 'press',
+        '스미스 벤치프레스': 'press',
+        '스미스 인클라인 프레스': 'press',
+        '체스트프레스 머신': 'press',
+        '인클라인 체스트프레스': 'press',
+        '펙덱 플라이': 'fly',
+        '케이블 크로스오버': 'fly',
+        '로우 케이블 플라이': 'fly',
+        '덤벨 플라이': 'fly',
+        '인클라인 덤벨 플라이': 'fly',
+        '덤벨 풀오버': 'fly',
+        푸시업: 'press',
+        '인클라인 푸시업': 'press',
+        '딥스(가슴)': 'dip',
+        데드리프트: 'hinge',
+        '스모 데드리프트': 'hinge',
+        '바벨 로우': 'row',
+        '펜들레이 로우': 'row',
+        '언더그립 바벨 로우': 'row',
+        '덤벨 로우': 'row',
+        '인클라인 덤벨 로우': 'row',
+        랫풀다운: 'pulldown',
+        '클로즈그립 랫풀다운': 'pulldown',
+        '시티드 케이블 로우': 'row',
+        '하이로우 머신': 'row',
+        '로우 머신': 'row',
+        '티바 로우': 'row',
+        풀업: 'pulldown',
+        친업: 'pulldown',
+        '어시스트 풀업': 'pulldown',
+        '스트레이트암 풀다운': 'pulldown',
+        '백 익스텐션': 'hinge',
+        '바벨 슈러그': 'shrug',
+        '덤벨 슈러그': 'shrug',
+        '오버헤드 프레스': 'overhead_press',
+        '밀리터리 프레스': 'overhead_press',
+        '덤벨 숄더프레스': 'overhead_press',
+        '아놀드 프레스': 'overhead_press',
+        '숄더프레스 머신': 'overhead_press',
+        '스미스 숄더프레스': 'overhead_press',
+        '사이드 레터럴 레이즈': 'lateral',
+        '케이블 레터럴 레이즈': 'lateral',
+        '머신 레터럴 레이즈': 'lateral',
+        '프론트 레이즈': 'lateral',
+        '벤트오버 레터럴 레이즈': 'lateral',
+        '리버스 펙덱': 'lateral',
+        '페이스 풀': 'lateral',
+        '업라이트 로우': 'lateral',
+        '케이블 푸시다운': 'triceps_ext',
+        '로프 푸시다운': 'triceps_ext',
+        '라잉 트라이셉스 익스텐션': 'triceps_ext',
+        '오버헤드 트라이셉스 익스텐션': 'triceps_ext',
+        '클로즈그립 벤치프레스': 'press',
+        '덤벨 킥백': 'triceps_ext',
+        '벤치 딥스': 'dip',
+        '딥스(삼두)': 'dip',
+        '바벨 컬': 'curl',
+        'EZ바 컬': 'curl',
+        '덤벨 컬': 'curl',
+        '해머 컬': 'curl',
+        '인클라인 덤벨 컬': 'curl',
+        '컨센트레이션 컬': 'curl',
+        '프리처 컬': 'curl',
+        '케이블 컬': 'curl',
+        '스파이더 컬': 'curl',
+        스쿼트: 'squat',
+        '프론트 스쿼트': 'squat',
+        '스미스 스쿼트': 'squat',
+        핵스쿼트: 'squat',
+        레그프레스: 'squat',
+        런지: 'squat',
+        '워킹 런지': 'squat',
+        '불가리안 스플릿 스쿼트': 'squat',
+        '루마니안 데드리프트': 'hinge',
+        '스티프 데드리프트': 'hinge',
+        '레그 컬': 'leg_isolation',
+        '레그 익스텐션': 'leg_isolation',
+        '힙 쓰러스트': 'hinge',
+        '힙 쓰러스트 머신': 'hinge',
+        '케이블 킥백': 'leg_isolation',
+        '이너타이(어덕션)': 'leg_isolation',
+        '아웃타이(어브덕션)': 'leg_isolation',
+        '카프 레이즈(머신)': 'leg_isolation',
+        '스탠딩 카프 레이즈': 'leg_isolation',
+        '맨몸 스쿼트': 'squat',
+        '점프 스쿼트': 'squat',
+        스텝업: 'squat',
+        크런치: 'core',
+        '리버스 크런치': 'core',
+        '레그 레이즈': 'core',
+        '행잉 레그 레이즈': 'core',
+        플랭크: 'core',
+        '사이드 플랭크': 'core',
+        '케이블 크런치': 'core',
+        '러시안 트위스트': 'core',
+        '마운틴 클라이머': 'core',
+        '앱 롤아웃': 'core',
+        '캡틴체어 레그레이즈': 'core',
+        '트레드밀(러닝)': 'cardio',
+        '인클라인 걷기': 'cardio',
+        사이클: 'cardio',
+        로잉머신: 'cardio',
+        일립티컬: 'cardio',
+        스텝밀: 'cardio',
+        버피: 'cardio',
+        줄넘기: 'cardio',
+        배틀로프: 'cardio',
+        '걷기·러닝(야외)': 'cardio',
+        '어시스트 딥': 'dip',
+        '풀오버 머신': 'fly',
+        '슈러그 머신': 'shrug',
+        '글루트 킥백 머신': 'leg_isolation',
+        '앱 크런치 머신': 'core',
+        '로터리 토르소': 'core',
+      };
+      // 패턴별 시작·끝 2컷 스틱피겨 (stroke=currentColor로 라이트/다크 자동 대응)
+      const MOTION_POSES = {
+        press:
+          '<line x1="15" y1="72" x2="85" y2="72"/><line x1="20" y1="72" x2="20" y2="82"/><line x1="80" y1="72" x2="80" y2="82"/><circle cx="28" cy="58" r="7" fill="currentColor"/><line x1="35" y1="60" x2="66" y2="63"/><line x1="66" y1="63" x2="78" y2="74"/><line x1="78" y1="74" x2="70" y2="90"/>' +
+          '§<line x1="46" y1="60" x2="38" y2="50"/><line x1="38" y1="50" x2="48" y2="44"/><line x1="34" y1="44" x2="62" y2="44"/>' +
+          '§<line x1="46" y1="60" x2="44" y2="38"/><line x1="44" y1="38" x2="52" y2="28"/><line x1="38" y1="28" x2="66" y2="28"/>',
+        squat:
+          '<line x1="42" y1="85" x2="58" y2="85"/>' +
+          '§<circle cx="50" cy="15" r="7" fill="currentColor"/><line x1="50" y1="22" x2="50" y2="45"/><line x1="50" y1="45" x2="50" y2="65"/><line x1="50" y1="65" x2="50" y2="85"/><line x1="50" y1="25" x2="46" y2="40"/>' +
+          '§<circle cx="46" cy="32" r="7" fill="currentColor"/><line x1="46" y1="39" x2="50" y2="60"/><line x1="50" y1="60" x2="58" y2="68"/><line x1="58" y1="68" x2="50" y2="85"/><line x1="48" y1="42" x2="35" y2="45"/>',
+        pulldown:
+          '<line x1="50" y1="80" x2="65" y2="80"/><line x1="65" y1="80" x2="65" y2="95"/>' +
+          '§<circle cx="50" cy="38" r="7" fill="currentColor"/><line x1="50" y1="45" x2="50" y2="80"/><line x1="50" y1="48" x2="45" y2="30"/><line x1="45" y1="30" x2="50" y2="15"/><line x1="35" y1="15" x2="65" y2="15"/>' +
+          '§<circle cx="50" cy="38" r="7" fill="currentColor"/><line x1="50" y1="45" x2="50" y2="80"/><line x1="50" y1="48" x2="35" y2="55"/><line x1="35" y1="55" x2="48" y2="58"/><line x1="35" y1="58" x2="60" y2="58"/>',
+        curl:
+          '<circle cx="50" cy="15" r="7" fill="currentColor"/><line x1="50" y1="22" x2="50" y2="55"/><line x1="50" y1="55" x2="50" y2="85"/><line x1="42" y1="85" x2="58" y2="85"/><line x1="50" y1="28" x2="50" y2="45"/>' +
+          '§<line x1="50" y1="45" x2="50" y2="62"/><circle cx="50" cy="63" r="3"/>' +
+          '§<line x1="50" y1="45" x2="38" y2="32"/><circle cx="38" cy="31" r="3"/>',
+        lateral:
+          '<circle cx="50" cy="15" r="7" fill="currentColor"/><line x1="50" y1="22" x2="50" y2="55"/><line x1="50" y1="55" x2="50" y2="85"/><line x1="42" y1="85" x2="58" y2="85"/>' +
+          '§<line x1="50" y1="28" x2="48" y2="50"/><circle cx="48" cy="51" r="3"/>' +
+          '§<line x1="50" y1="28" x2="75" y2="26"/><circle cx="75" cy="26" r="3"/>',
+      };
+      function stickSvg(inner) {
+        return (
+          '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">' +
+          inner +
+          '</svg>'
+        );
+      }
+      function motionFrame(name) {
+        const pattern = MOTION_PATTERN[name];
+        const raw = pattern && MOTION_POSES[pattern];
+        if (!raw) return '';
+        const parts = raw.split('§');
+        const shared = parts[0];
+        const poseA = shared + parts[1];
+        const poseB = shared + parts[2];
+        const reduced =
+          window.matchMedia &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduced) {
+          return (
+            '<div class="motion-static"><div><span class="motion-cap">시작</span>' +
+            stickSvg(poseA) +
+            '</div><div><span class="motion-cap">끝</span>' +
+            stickSvg(poseB) +
+            '</div></div>'
+          );
+        }
+        return (
+          '<div class="motion-anim">' +
+          stickSvg(poseA) +
+          '<div class="pose2">' +
+          stickSvg(poseB) +
+          '</div></div>'
+        );
+      }
       function openForm(name) {
         const f = FORM[name];
         const yt =
@@ -1953,6 +2166,7 @@
           '<h3 style="font-size:18px;margin-bottom:4px">' +
           esc(name) +
           '</h3>' +
+          motionFrame(name) +
           body +
           '<a class="btn" style="text-decoration:none;text-align:center;margin-top:14px" href="' +
           yt +
@@ -2609,7 +2823,11 @@
                   .map(function (s, si) {
                     if (cardio)
                       return (
-                        '<div class="setrow"><button class="no" onclick="delSet(' + ei + ',' + si + ')">' +
+                        '<div class="setrow"><button class="no" onclick="delSet(' +
+                        ei +
+                        ',' +
+                        si +
+                        ')">' +
                         (si + 1) +
                         '</button><input style="flex:1" placeholder="시간/거리" value="' +
                         esc(s.reps) +
@@ -2626,7 +2844,11 @@
                         ')">✓</button></div>'
                       );
                     return (
-                      '<div class="setrow"><button class="no" onclick="delSet(' + ei + ',' + si + ')">' +
+                      '<div class="setrow"><button class="no" onclick="delSet(' +
+                      ei +
+                      ',' +
+                      si +
+                      ')">' +
                       (si + 1) +
                       '</button>' +
                       '<div class="stp"><button onclick="adj(' +
