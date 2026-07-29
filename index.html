@@ -364,15 +364,20 @@
         margin: 6px auto 10px;
       }
       .motion-anim .mo-b {
-        animation: moFade 1.8s ease-in-out infinite;
+        animation: moFade 2.4s ease-in-out infinite;
       }
       @keyframes moFade {
         0%,
-        100% {
+        12% {
           opacity: 0;
         }
-        50% {
+        38%,
+        62% {
           opacity: 1;
+        }
+        88%,
+        100% {
+          opacity: 0;
         }
       }
       .del {
