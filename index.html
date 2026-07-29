@@ -4102,7 +4102,7 @@
         var body;
         if (!coachKey()) {
           body =
-            '<div class="card muted">AI 코치를 쓰려면 설정에서 Anthropic API 키를 먼저 넣어주세요. 밥 사진을 올리면 칼로리를 계산하고, 내 기록에 맞춰 무게·강도를 추천해줘요.</div>';
+            '<div class="card muted">AI 코치를 쓰려면 설정에서 Anthropic API 키를 먼저 넣어주세요. 밥 사진을 올리면 칼로리를 계산하고, 내 기록에 맞춰 무게·강도를 추천해줘요.<br><br><button class="btn" onclick="go(\'set\')">설정으로 가기</button></div>';
         } else if (!coachMsgs.length) {
           body =
             '<div class="card muted">무엇이든 물어보세요. 예: "오늘 뭐부터 할까?", "벤치 무게 얼마로?", 먹은 밥 사진을 올리면 칼로리를 기록해줘요.</div>';
