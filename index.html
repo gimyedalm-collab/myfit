@@ -2412,6 +2412,16 @@
         foodsOpen = !foodsOpen;
         render();
       }
+      let equipOpen = false;
+      function toggleEquip() {
+        equipOpen = !equipOpen;
+        render();
+      }
+      let coachOpen = false;
+      function toggleCoach() {
+        coachOpen = !coachOpen;
+        render();
+      }
       function foodCount(name) {
         var n = 0;
         Object.keys(st.meals).forEach(function (d) {
@@ -3682,17 +3692,26 @@
           'kcal)</label><input inputmode="numeric" value="' +
           esc(p.kcal) +
           '" onchange="st.profile.kcal=this.value;save()"></div>' +
-          '<div class="card"><h3>내 헬스장 기구</h3><p class="muted">있는 것만 켜두면 그 기구로만 추천해요 (맨몸 운동은 항상 포함)</p><br>' +
-          EQUIP.map(
-            (q) =>
-              '<span class="chip' +
-              (st.equip.includes(q) ? ' on' : '') +
-              '" onclick="tgEq(\'' +
-              q +
-              '\')">' +
-              q +
-              '</span>',
-          ).join('') +
+          '<div class="card"><h3 style="cursor:pointer;padding:13px 0;margin:0;box-sizing:border-box;display:flex;align-items:center" onclick="toggleEquip()">' +
+          (equipOpen ? '▾' : '▸') +
+          ' 내 헬스장 기구 <span class="muted" style="font-weight:400;font-size:12px">' +
+          st.equip.length +
+          '개 선택됨 · 탭해서 ' +
+          (equipOpen ? '접기' : '수정') +
+          '</span></h3>' +
+          (equipOpen
+            ? '<p class="muted" style="margin-top:-4px">있는 것만 켜두면 그 기구로만 추천해요 (맨몸 운동은 항상 포함)</p><br>' +
+              EQUIP.map(
+                (q) =>
+                  '<span class="chip' +
+                  (st.equip.includes(q) ? ' on' : '') +
+                  '" onclick="tgEq(\'' +
+                  q +
+                  '\')">' +
+                  q +
+                  '</span>',
+              ).join('')
+            : '') +
           '</div>' +
           coachSettingsCard() +
           '<div class="card"><h3>화면 테마</h3><div class="seg">' +
@@ -4066,6 +4085,12 @@
         return st.provider === 'gemini' ? st.gkey : st.apiKey;
       }
       function coachSettingsCard() {
+        var hasKey = !!(st.apiKey || st.gkey);
+        if (!coachOpen && !hasKey) {
+          return (
+            '<div class="card"><h3 style="cursor:pointer;padding:13px 0;margin:0;box-sizing:border-box;display:flex;align-items:center" onclick="toggleCoach()">▸ AI 코치 <span class="muted" style="font-weight:400;font-size:12px">선택사항 · 무료(Gemini)로도 가능</span></h3></div>'
+          );
+        }
         var prov = st.provider || 'claude';
         var provSel = [
           ['claude', 'Claude (유료·최고품질)'],
