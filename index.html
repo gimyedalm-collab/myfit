@@ -360,18 +360,10 @@
         height: 100px;
       }
       .motion-anim {
-        position: relative;
-        width: 100px;
-        height: 100px;
+        text-align: center;
         margin: 6px auto 10px;
       }
-      .motion-anim svg {
-        position: absolute;
-        inset: 0;
-      }
-      .motion-anim .pose2 {
-        position: absolute;
-        inset: 0;
+      .motion-anim .mo-b {
         animation: moFade 1.8s ease-in-out infinite;
       }
       @keyframes moFade {
@@ -965,6 +957,26 @@
       </button>
     </nav>
     <script>
+      // 핀치 확대 차단 (뷰포트의 user-scalable=no는 iOS/일부 안드로이드가 접근성상 무시함)
+      document.addEventListener(
+        'gesturestart',
+        (e) => e.preventDefault(),
+        { passive: false },
+      );
+      document.addEventListener(
+        'touchstart',
+        (e) => {
+          if (e.touches.length > 1) e.preventDefault();
+        },
+        { passive: false },
+      );
+      document.addEventListener(
+        'touchmove',
+        (e) => {
+          if (e.touches.length > 1) e.preventDefault();
+        },
+        { passive: false },
+      );
       // ===== 데이터 =====
       const KEY = 'fitapp1';
       let st = JSON.parse(localStorage.getItem(KEY) || 'null') || {
@@ -2166,10 +2178,8 @@
         }
         return (
           '<div class="motion-anim">' +
-          stickSvg(poseA) +
-          '<div class="pose2">' +
-          stickSvg(poseB) +
-          '</div></div>'
+          stickSvg('<g>' + poseA + '</g><g class="mo-b">' + poseB + '</g>') +
+          '</div>'
         );
       }
       function openForm(name) {

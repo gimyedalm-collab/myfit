@@ -1,4 +1,4 @@
-const C = 'myfit-v2';
+const C = 'myfit-v3';
 const F = ['./index.html', './manifest.json', './icon.svg'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(C).then((c) => c.addAll(F)));
@@ -28,9 +28,7 @@ self.addEventListener('fetch', (e) => {
         return res;
       })
       .catch(() =>
-        caches
-          .match(e.request)
-          .then((r) => r || caches.match('./index.html')),
+        caches.match(e.request).then((r) => r || caches.match('./index.html')),
       ),
   );
 });
